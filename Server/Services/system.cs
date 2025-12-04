@@ -188,47 +188,42 @@ namespace Server.Services
         }
 
 
-        // Hàm này để restart, shutdown  máy 
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool ExitWindowsEx(uint uFlags, uint dwReason);
-
-        private const uint EWX_SHUTDOWN = 0x00000008; // Tắt máy
-        private const uint EWX_REBOOT = 0x00000002;   // Khởi động lại
-        private const uint EWX_FORCE = 0x00000004;    // Nếu tiến trình nào cứng đầu quá thì buộc dừng
-
+        // Hàm này để restart, shutdown máy (Sử dụng lệnh hệ thống thay vì API)
         public bool ShutdownComputer(bool isRestart)
         {
-            if (IsOSPlatform(OSPlatform.Windows))
+            try
             {
-                uint flag = isRestart ? EWX_REBOOT : EWX_SHUTDOWN;
-                try
+                ProcessStartInfo psi = new ProcessStartInfo
                 {
-                    return ExitWindowsEx(flag | EWX_FORCE, 0); 
-                }
-                catch (Exception ex) 
-                { 
-                    Console.WriteLine($"Error shutting down/restarting Windows: {ex.Message}");
-                    return false; 
-                }
-            }
-            else if (IsOSPlatform(OSPlatform.OSX) || IsOSPlatform(OSPlatform.Linux))
-            {
-                string command = isRestart ? "shutdown -r now" : "shutdown -h now";
-                
-                try
+                    FileName = "shutdown",
+                    CreateNoWindow = true,
+                    UseShellExecute = false,
+                    WindowStyle = ProcessWindowStyle.Hidden
+                };
+
+                if (IsOSPlatform(OSPlatform.Windows))
                 {
-                    ExecuteShellCommand(command, "sh"); 
-                    return true;
+                    // /r: restart, /s: shutdown, /t 0: ngay lập tức, /f: force (ép tắt ứng dụng đang chạy)
+                    psi.Arguments = isRestart ? "/r /t 0 /f" : "/s /t 0 /f";
                 }
-                catch (Exception ex)
+                else if (IsOSPlatform(OSPlatform.OSX) || IsOSPlatform(OSPlatform.Linux))
                 {
-                    Console.WriteLine($"Error executing shell command on Unix-like OS: {ex.Message}");
+                    psi.Arguments = isRestart ? "-r now" : "-h now";
+                }
+                else
+                {
+                    Console.WriteLine("Shutdown command not implemented for this OS.");
                     return false;
                 }
+
+                Process.Start(psi);
+                return true;
             }
-            
-            Console.WriteLine("Shutdown command not implemented for this OS.");
-            return false;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error executing power command: {ex.Message}");
+                return false;
+            }
         }
 
 
