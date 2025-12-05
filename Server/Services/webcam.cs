@@ -23,6 +23,21 @@ namespace Server.Services
             return helperCapScr();
         }
 
+        public void closeWebcam()
+        {
+            helperCloseWebcam();
+        }
+
+        public bool OpenWebcam()
+        {
+            return helperOpenWebcam();
+        }
+
+        public async Task<List<byte[]>> videoMakerManager(int frameRate, CancellationToken cancellationToken)
+        {
+            return await helperVideoMakerManager(frameRate, cancellationToken);
+        }
+
 
         // hàm này là để chụp màn hình 
         private byte[] helperCapScr()
@@ -90,7 +105,7 @@ namespace Server.Services
             return null;
         }
 
-        public void CloseWebcam()
+        private void helperCloseWebcam()
         {
             if (_webcamCapture != null)
             {
@@ -105,7 +120,7 @@ namespace Server.Services
             }
         }
 
-        public bool OpenWebcam()
+        private bool helperOpenWebcam()
         {
             if (_webcamCapture != null)
             {
@@ -133,7 +148,7 @@ namespace Server.Services
 
 
         // Hàm này capture 1 frame từ webcam
-        public byte[] CaptureWebcamFrame()
+        private byte[] captureForVideo()
         {
             if (_webcamCapture == null || !_webcamCapture.IsOpened())
             {
@@ -154,6 +169,46 @@ namespace Server.Services
                 return encodedFrame.ToBytes();
             }
         }
+
+        private async Task<List<byte[]>> helperVideoMakerManager(int frameRate, CancellationToken cancellationToken)
+        {
+            if (!OpenWebcam())
+            {
+                Console.WriteLine("Failed to open webcam for proof.");
+                return new List<byte[]>();
+            }
+
+            int durationMs = 3000; // 3 giây
+            List<byte[]> proofFrames = await videoMaker(durationMs, frameRate, cancellationToken);            
+            return proofFrames;
+        }
+
+        private async Task<List<byte[]>> videoMaker(int durationMs, int frameRate, CancellationToken cancellationToken)
+        {
+            List<byte[]> frames = new List<byte[]>();
+            
+            if (_webcamCapture == null || !_webcamCapture.IsOpened()) return frames;
+
+            int delayMs = 1000 / frameRate; // này là để coi đợi bao lâu thì chụp tiếp
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
+            try
+            {
+                while (stopwatch.ElapsedMilliseconds < durationMs && !cancellationToken.IsCancellationRequested)
+                {
+                    byte[] frameData = captureForVideo();
+                    if (frameData != null && frameData.Length > 0) frames.Add(frameData);
+                    await Task.Delay(delayMs, cancellationToken);
+                }
+            }
+            finally
+            {
+                stopwatch.Stop();
+            }
+
+            return frames;
+        }
+        
         
     }
 }
