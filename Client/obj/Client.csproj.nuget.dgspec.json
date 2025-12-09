@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Client/Client.csproj": {}
+    "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Client/Client.csproj": {}
   },
   "projects": {
-    "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Client/Client.csproj": {
+    "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Client/Client.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Client/Client.csproj",
+        "projectUniqueName": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Client/Client.csproj",
         "projectName": "Client",
-        "projectPath": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Client/Client.csproj",
+        "projectPath": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Client/Client.csproj",
         "packagesPath": "/Users/lengoctuyen/.nuget/packages/",
-        "outputPath": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Client/obj/",
+        "outputPath": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Client/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/lengoctuyen/.nuget/NuGet/NuGet.Config"

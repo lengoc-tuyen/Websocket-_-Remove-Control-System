@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "UN+bOhHveHdTh5ff3bGB6sWgZtR4BRMP/7WKgFfV4+OMAwpEVqkp+TCzAbepMk2VXlGfkXgq4f/9tw5Ux07GcA==",
+  "dgSpecHash": "lXkgjHKmjSS7aCm2JszH0xUrcM47qqBz7GckxaCl+u7+H6ZjeX6z3eRXhu2gjOMsQVNuWAHFZVXd6fH5jRHdZA==",
   "success": true,
-  "projectFilePath": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Client/Client.csproj",
+  "projectFilePath": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Client/Client.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

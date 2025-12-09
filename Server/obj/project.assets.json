@@ -622,11 +622,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Server/Server.csproj",
+      "projectUniqueName": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Server/Server.csproj",
       "projectName": "Server",
-      "projectPath": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Server/Server.csproj",
+      "projectPath": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Server/Server.csproj",
       "packagesPath": "/Users/lengoctuyen/.nuget/packages/",
-      "outputPath": "/Users/lengoctuyen/Documents/Allmyproject/Websocket-_-Remove-Control-System/Server/obj/",
+      "outputPath": "/Users/lengoctuyen/Documents/GitHub/Websocket-_-Remove-Control-System/Server/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/Users/lengoctuyen/.nuget/NuGet/NuGet.Config"
