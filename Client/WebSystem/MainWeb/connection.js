@@ -64,11 +64,19 @@ async function connect() {
         }
     });
 
+
     connection.on("ReceiveKeyLog", (key) => {
         const area = document.getElementById("keylogArea");
         area.value += key;
         area.scrollTop = area.scrollHeight;
     });
+
+    connection.on("ReceiveChatMessage", (message) => {
+        if (window.ui && window.ui.addChatMessage) {
+            ui.showTyping(false);
+            ui.addChatMessage(message, 'bot');
+        }
+   });
 
     try {
         await connection.start();
@@ -181,11 +189,46 @@ function wireActionButtons() {
             connection.invoke("ShutdownServer", false);
         }
     });
+
+    const sendChatBtn = document.getElementById("sendChatBtn");
+    if (sendChatBtn) {
+        sendChatBtn.addEventListener("click", () => {
+            const input = document.getElementById("chatInput");
+            const text = input.value.trim();
+            if (!text) return;
+
+            // 1. Hiện tin nhắn user
+            if(window.ui && window.ui.addChatMessage) {
+                ui.addChatMessage(text, 'user');
+            }
+            input.value = "";
+
+            // 2. Check kết nối
+            if (!isConnected) {
+                if(window.ui) ui.addChatMessage("⚠️ Chưa kết nối Server!", 'bot');
+                return;
+            }
+
+            // 3. Gửi lên Server
+            if(window.ui) ui.showTyping(true);
+            
+            connection.invoke("ChatWithAi", text).catch(err => {
+                if(window.ui) {
+                    ui.showTyping(false);
+                    ui.addChatMessage("Lỗi: " + err.toString(), 'bot');
+                }
+            });
+        });
+    }
 }
 
-toggleConnectBtn.addEventListener("click", () => {
-    if (!isConnected) connect();
-    else disconnect();
-});
+// Gắn sự kiện cho nút Connect chính
+if(toggleConnectBtn) {
+    toggleConnectBtn.addEventListener("click", () => {
+        if (!isConnected) connect();
+        else disconnect();
+    });
+}
 
-wireActionButtons();
+// Khởi tạo các sự kiện khi trang web load xong
+document.addEventListener("DOMContentLoaded", wireActionButtons);
