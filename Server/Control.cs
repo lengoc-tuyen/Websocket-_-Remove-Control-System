@@ -4,6 +4,10 @@ using Server.helper;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 
 namespace Server.Hubs
 {
@@ -12,19 +16,21 @@ namespace Server.Hubs
         private readonly SystemService _systemService;
         private readonly WebcamService _webcamService;
         private readonly InputService _inputService;
-        
         private readonly IHubContext<ControlHub> _hubContext;
+        private readonly IConfiguration _configuration;
 
         public ControlHub(
             SystemService systemService, 
             WebcamService webcamService, 
             InputService inputService,
-            IHubContext<ControlHub> hubContext)
+            IHubContext<ControlHub> hubContext,
+            IConfiguration configuration)
         {
             _systemService = systemService;
             _webcamService = webcamService;
             _inputService = inputService;
             _hubContext = hubContext;
+            _configuration = configuration;
         }
 
         // --- NHÓM 1: HỆ THỐNG (LIST, START, KILL, SHUTDOWN) ---
@@ -110,6 +116,95 @@ namespace Server.Hubs
         {
             _inputService.StopKeyLogger();
             await Clients.Caller.SendAsync("ReceiveStatus", "KEYLOG", false, "Keylogger đã dừng.");
+        }
+
+
+        public async Task ChatWithAi(string message)
+        {
+            string reply = "";
+            
+            string apiKey = _configuration["ApiKeys:GeminiApiKey"] ?? "";
+            
+            string projectInfo = @"
+                Bạn là 'Snowman' (Người Tuyết) ⛄ - Trợ lý ảo vui tính trong đồ án 'Christmas LAN Remote'.
+                Nhiệm vụ của bạn là hướng dẫn người dùng sử dụng phần mềm này. Hãy trả lời ngắn gọn, hài hước, đậm chất Giáng sinh (ho ho ho).
+                
+                THÔNG TIN VỀ ỨNG DỤNG NÀY:
+                1. Mục đích: Điều khiển máy tính từ xa trong mạng LAN qua giao diện Web.
+                2. Công nghệ: Server chạy C# (.NET 8), Client chạy Web (HTML/JS), giao tiếp qua SignalR (WebSocket).
+                3. Các tính năng chính (Tab):
+                   - Tab APP: Liệt kê các ứng dụng có cửa sổ. Có thể Start (Mở) hoặc Stop (Tắt).
+                   - Tab PROCESS: Quản lý toàn bộ tiến trình hệ thống (kể cả chạy ngầm).
+                   - Tab SCREEN: Chụp ảnh màn hình máy Server (Snapshot).
+                   - Tab KEYLOG: Theo dõi bàn phím của máy Server theo thời gian thực.
+                   - Tab WEBCAM: Mở Webcam, quay video 3 giây để làm bằng chứng, rồi gửi về Client.
+                   - Tab POWER: Tắt máy (Shutdown) hoặc Khởi động lại (Restart).
+                
+                HƯỚNG DẪN KẾT NỐI:
+                - Nhập IP của máy Server vào ô trên cùng bên phải.
+                - Bấm nút 'Kết nối'. Nếu thành công, đèn sẽ chuyển xanh.
+                
+                LƯU Ý AN TOÀN:
+                - Lệnh Shutdown/Restart và Kill Process rất nguy hiểm, hãy nhắc người dùng cẩn thận.
+            ";
+
+            if (!string.IsNullOrEmpty(apiKey))
+            {
+                try 
+                {
+                    string apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={apiKey}";
+                    
+                        string finalPrompt = $"{projectInfo}\n\nCâu hỏi của người dùng: {message}";
+
+                    var requestData = new
+                    {
+                        contents = new[] 
+                        { 
+                            new { parts = new[] { new { text = finalPrompt } } } 
+                        }
+                    };
+
+                    using (var httpClient = new HttpClient())
+                    {
+                        var jsonContent = new StringContent(
+                            JsonSerializer.Serialize(requestData), 
+                            Encoding.UTF8, 
+                            "application/json");
+                        
+                        var response = await httpClient.PostAsync(apiUrl, jsonContent);
+                        
+                        if (response.IsSuccessStatusCode)
+                        {
+                            var responseString = await response.Content.ReadAsStringAsync();
+                            using (JsonDocument doc = JsonDocument.Parse(responseString))
+                            {
+                                try 
+                                {
+                                    reply = doc.RootElement.GetProperty("candidates")[0]
+                                        .GetProperty("content").GetProperty("parts")[0]
+                                        .GetProperty("text").GetString() ?? ""; 
+                                }
+                                catch { reply = "AI bị đóng băng rồi 🥶 (Lỗi parse)."; }
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex) { Console.WriteLine("Lỗi HTTP: " + ex.Message); }
+            }
+
+            // --- LOGIC DỰ PHÒNG (NẾU KHÔNG CÓ KEY) ---
+            if (string.IsNullOrEmpty(reply))
+            {
+                string lower = message.ToLower();
+                if (lower.Contains("dùng") || lower.Contains("hướng dẫn") || lower.Contains("cách"))
+                    reply = "Ho ho ho! Để dùng app này, bạn nhập IP Server rồi bấm Kết nối nhé! Sau đó chọn các Tab chức năng bên dưới.";
+                else if (lower.Contains("chào"))
+                    reply = "Chào bạn! Mình là Snowman ⛄. Mình biết tất cả về đồ án này, hãy hỏi đi!";
+                else
+                    reply = $"Mình nhận được: '{message}'. (Hãy nhập API Key để mình thông minh hơn nhé!)";
+            }
+
+            await Clients.Caller.SendAsync("ReceiveChatMessage", reply);
         }
     }
 }
