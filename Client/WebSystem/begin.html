@@ -1,204 +1,228 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <title>Giáng Sinh LAN Remote</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đồ án Mạng Máy Tính - Winter Edition</title>
 
-        body {
-            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-            min-height: 100vh;
+    <!-- Font giáng sinh của bạn -->
+    <style>
+        @font-face {
+            font-family: 'ChristmasFont';
+            src: url('fonts/christmas.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
+    </style>
+
+    <style>
+        :root {
+            --sky-top: #0F2027;
+            --sky-bottom: #2C5364;
+            --snow: #ffffff;
+            --wood: #795548;
+            --wood-dark: #5D4037;
+            --red-festive: #D32F2F;
+            --green-festive: #388E3C;
+            --yellow-light: #FFD54F;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            /*background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));*/
+            background: url('home-bg.png') center/cover no-repeat fixed;
+            font-family: 'ChristmasFont', cursive; /* Áp dụng font toàn trang */
+        }
+
+        /* Tuyết rơi */
+        .snowflake {
+            position: absolute;
+            top: -10px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.8;
+            pointer-events: none;
+            box-shadow: 0 0 5px rgba(255,255,255,0.8);
+        }
+
+        @keyframes fall {
+            to { transform: translateY(110vh); }
+        }
+
+        /* Đồi tuyết */
+        .hill {
+            position: absolute;
+            bottom: -50px;
+            background: var(--snow);
+            border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+            box-shadow: 0 -5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .hill-1 { width: 120%; height: 200px; left: -10%; z-index: 1; opacity: 0.7; }
+        .hill-2 { width: 120%; height: 250px; right: -20%; z-index: 2; opacity: 0.9; }
+        .hill-3 { width: 150%; height: 120px; left: -20%; bottom: -20px; z-index: 10; }
+
+        /* Container */
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: radial-gradient(circle at top, #1d4ed8 0, #020617 55%, #020617 100%);
-            color: #f9fafb;
-            position: relative;
-            overflow: hidden;
+            z-index: 20;
         }
 
-        body::before {
-            content: "";
-            position: fixed;
-            inset: 0;
-            pointer-events: none;
-            background-image:
-                radial-gradient(circle, rgba(255,255,255,0.9) 1px, transparent 2px),
-                radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 2px);
-            background-size: 80px 80px, 120px 120px;
-            background-position: 0 0, 40px 40px;
-            opacity: 0.25;
-            z-index: 0;
-        }
-
-        header {
+        /* Tiêu đề */
+        h1.title {
+            font-size: 5rem;
+            margin-top: 5vh;
             text-align: center;
-            padding: 28px 16px 14px;
-            position: relative;
-            z-index: 1;
+            color: var(--snow);
+            letter-spacing: 2px;
+            line-height: 1.2;
+            animation: floatText 3s ease-in-out infinite;
+            text-shadow: 3px 3px 0 #B71C1C;
         }
 
-        .title {
-            font-size: 32px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
+        @keyframes floatText {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
-
-        .title span.accent { color: #f97316; }
 
         .subtitle {
-            margin-top: 8px;
-            font-size: 15px;
-            color: #e5e7eb;
+            font-size: 1.4rem;
+            color: var(--yellow-light);
+            background: rgba(255,255,255,0.15);
+            padding: 8px 20px;
+            border-radius: 50px;
+            backdrop-filter: blur(5px);
+            margin-top: 20px;
         }
 
-        .tagline {
-            margin-top: 6px;
-            font-size: 13px;
-            color: #9ca3af;
-        }
-
-        .main-content {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            position: relative;
-            z-index: 1;
-            width: 100%;
-        }
-
-        .trees-wrapper {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 32px;
-            justify-content: center;
-            max-width: 900px;
-        }
-
-        a.tree-link {
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .tree-card {
-            width: 260px;
-            height: 260px;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: filter 0.2s ease;
-        }
-
-        /* Ảnh bảng gỗ */
-        .board-img {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            filter: drop-shadow(0 12px 18px rgba(0,0,0,0.8));
-        }
-
-        /* Chữ nằm trên mặt bảng */
-        .tree-label {
+        /* Cây bảng hiệu */
+        .signpost-wrapper {
             position: absolute;
-            top: 45%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            width: 70%;
-            font-size: 16px;
-            font-weight: 700;
-            color: #3b1f0a;
-            text-shadow:
-                0 1px 2px rgba(255,255,255,0.7),
-                0 2px 4px rgba(0,0,0,0.35);
+            bottom: 50px;
+            left: 15%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform-origin: bottom center;
+            animation: swayWind 5s ease-in-out infinite;
         }
 
-        .tree-label span.sub {
-            display: block;
-            margin-top: 4px;
-            font-size: 11px;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #5b3416;
+        @keyframes swayWind {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(1deg); }
+            75% { transform: rotate(-1deg); }
         }
 
-        /* Hiệu ứng lắc nhẹ khi hover */
-        .tree-card:hover {
-            animation: wobble 0.35s ease-in-out;
-            filter: brightness(1.05);
+        .pole {
+            width: 30px;
+            height: 350px;
+            background: linear-gradient(90deg, #6D4C41 0%, #8D6E63 50%, #795548 100%);
+            border-radius: 15px;
+            box-shadow: inset -3px 0 8px rgba(0,0,0,0.4), 0 10px 25px rgba(0,0,0,0.5);
         }
 
-        @keyframes wobble {
-            0%   { transform: translateY(0) rotate(0deg) scale(1); }
-            25%  { transform: translateY(-2px) rotate(-2deg) scale(1.02); }
-            50%  { transform: translateY(0) rotate(2deg) scale(1.02); }
-            75%  { transform: translateY(-1px) rotate(-1.5deg) scale(1.01); }
-            100% { transform: translateY(0) rotate(0deg) scale(1); }
+        .pole::after {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -2px;
+            width: 22px;
+            height: 15px;
+            background: var(--snow);
+            border-radius: 10px;
         }
 
-        footer {
-            position: relative;
-            z-index: 1;
-            padding: 10px 16px 16px;
-            font-size: 12px;
-            color: #9ca3af;
-            text-align: center;
+        .sign {
+            position: absolute;
+            width: 200px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            color: #fff;
+            cursor: pointer;
+            text-decoration: none;
+            text-shadow: 2px 2px 3px rgba(0,0,0,.3);
+            transition: transform .2s ease;
         }
 
-        @media (max-width: 640px) {
-            .title { font-size: 24px; }
+        .sign:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px rgba(255,255,255,0.6));
         }
+
+        .sign-shape-left {
+            background: linear-gradient(135deg, #8D6E63 0%, #6D4C41 100%);
+            clip-path: polygon(100% 0, 100% 50%, 100% 100%, 0% 100%, 10% 50%, 0% 0);
+            padding-left: 20px;
+            transform: rotate(-7deg);
+            top: 40px;
+            left: -110px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .sign-shape-right {
+            background: linear-gradient(135deg, #8D6E63 0%, #6D4C41 100%);
+            clip-path: polygon(0% 0, 90% 0, 100% 50%, 90% 100%, 0% 100%);
+            padding-right: 20px;
+            transform: rotate(5deg);
+            top: 110px;
+            left: -80px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+        }
+
+        .snow-cap {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 10px;
+            background: white;
+            opacity: 0.9;
+        }
+
     </style>
 </head>
 <body>
-<header>
-    <div class="title">
-        <span class="accent">Christmas</span> LAN Remote
+
+    <!-- Đồi tuyết -->
+    <div class="hill hill-3"></div>
+
+    <!-- Nội dung -->
+    <div class="container">
+        <h1 class="title">Đồ Án<br>Mạng Máy Tính</h1>
+        <div class="subtitle"> • Nhóm 3 đứa ngồi chung •</div>
+
+        <div class="signpost-wrapper">
+            <div class="pole"></div>
+
+            <a href="gioi-thieu.html" class="sign sign-shape-left">
+                <div class="snow-cap"></div>
+                Giới Thiệu
+            </a>
+
+            <a href="huong-dan.html" class="sign sign-shape-right">
+                <div class="snow-cap"></div>
+                Hướng Dẫn
+            </a>
+        </div>
     </div>
-    <div class="subtitle">Web điều khiển máy tính trong mạng LAN – phong cách Giáng Sinh 🎄</div>
-    <div class="tagline">Chọn một tấm biển gỗ để bắt đầu với đồ án của bạn.</div>
-</header>
 
-<main class="main-content">
-    <div class="trees-wrapper">
-        <!-- Biển 1: Giới thiệu đồ án -->
-        <a href="intro.html" class="tree-link">
-            <div class="tree-card">
-                <img src="board.png" alt="Giới thiệu đồ án" class="board-img" />
-                <div class="tree-label">
-                    Giới thiệu<br/>về đồ án
-                    <span class="sub">Project Overview</span>
-                </div>
-            </div>
-        </a>
-
-        <!-- Biển 2: Hướng dẫn sử dụng -->
-        <a href="guide.html" class="tree-link">
-            <div class="tree-card">
-                <img src="board.png" alt="Hướng dẫn sử dụng" class="board-img" />
-                <div class="tree-label">
-                    Hướng dẫn<br/>cách sử dụng
-                    <span class="sub">User Guide</span>
-                </div>
-            </div>
-        </a>
-    </div>
-</main>
-
-<footer>
-    © 2025 – Đồ án Mạng Máy Tính • LAN Remote Control – Christmas Edition ❄️
-</footer>
-</body>
-</html>
-<script>
+    <!-- Tuyết rơi -->
+   <script>
 // ❄️ Hiệu ứng tuyết rơi dùng hình snow.png
 document.addEventListener("DOMContentLoaded", () => {
     const snowflakes = [];
@@ -248,14 +272,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<style>
-/* CSS nhỏ để hiệu ứng mượt hơn */
-.snowflake {
-    animation: snow-spin 6s linear infinite;
-}
-
-@keyframes snow-spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
-</style>
+</body>
+</html>
