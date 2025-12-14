@@ -51,23 +51,23 @@ async function connect() {
 
     connection.on("ReceiveStatus", (type, success, message) => {
         setStatus(`[${type}] ${message}`);
-        
+
         if (success) {
             if (type === "SETUP") {
                 handleServerStatus("SETUP_REGISTER");
             } else if (type === "REGISTER" || type === "LOGIN") {
                 // Đăng nhập/Đăng ký xong -> Vào màn hình chính
-                showMainScreen(); 
+                showMainScreen();
                 if (window.ui && window.ui.addChatMessage) {
                     ui.addChatMessage(message, 'bot');
                 }
             }
         } else {
-             alert(`Lỗi từ Server: ${message}`);
+            alert(`Lỗi từ Server: ${message}`);
         }
     });
 
-    connection.on("ReceiveImage", (type, base64Data)    => {
+    connection.on("ReceiveImage", (type, base64Data) => {
         const src = "data:image/jpeg;base64," + base64Data;
         if (type === "SCREENSHOT") {
             document.getElementById("screenPreview").src = src;
@@ -76,7 +76,6 @@ async function connect() {
             document.getElementById("webcamPreview").src = src;
         }
     });
-
 
     connection.on("ReceiveKeyLog", (key) => {
         const area = document.getElementById("keylogArea");
@@ -89,7 +88,7 @@ async function connect() {
             ui.showTyping(false);
             ui.addChatMessage(message, 'bot');
         }
-   });
+    });
 
     try {
         await connection.start();
@@ -98,7 +97,7 @@ async function connect() {
         setStatus("Kết nối thành công!");
         const status = await connection.invoke("GetServerStatus");
         console.log("Server Status:", status);
-            handleServerStatus(status);
+        handleServerStatus(status);
 
     } catch (err) {
         console.error(err);
@@ -110,9 +109,9 @@ async function connect() {
         isConnected = false;
         updateConnectionUI(false);
         setStatus("Mất kết nối với Server.");
-        if(document.getElementById("auth-screen")) {
-             document.getElementById("auth-screen").classList.remove('hidden');
-             document.getElementById("main-screen").classList.add('hidden');
+        if (document.getElementById("auth-screen")) {
+            document.getElementById("auth-screen").classList.remove('hidden');
+            document.getElementById("main-screen").classList.add('hidden');
         }
     });
 }
@@ -121,13 +120,13 @@ function handleServerStatus(status) {
     hideAllAuthForms();
 
     if (status === "SETUP_REQUIRED") {
-        if(document.getElementById('setup-form')) 
+        if (document.getElementById('setup-form'))
             document.getElementById('setup-form').classList.remove('hidden');
     } else if (status === "SETUP_REGISTER") {
-        if(document.getElementById('register-form')) 
+        if (document.getElementById('register-form'))
             document.getElementById('register-form').classList.remove('hidden');
     } else if (status === "LOGIN_REQUIRED") {
-        if(document.getElementById('login-form')) 
+        if (document.getElementById('login-form'))
             document.getElementById('login-form').classList.remove('hidden');
     } else if (status === "AUTHENTICATED") {
         showMainScreen();
@@ -138,34 +137,33 @@ function hideAllAuthForms() {
     const forms = ['setup-form', 'register-form', 'login-form'];
     forms.forEach(id => {
         const el = document.getElementById(id);
-        if(el) el.classList.add('hidden');
+        if (el) el.classList.add('hidden');
     });
 }
 
 function showMainScreen() {
     const authScreen = document.getElementById('auth-screen');
     const mainScreen = document.getElementById('main-screen');
-    if(authScreen) authScreen.classList.add('hidden');
-    if(mainScreen) mainScreen.classList.remove('hidden');
+    if (authScreen) authScreen.classList.add('hidden');
+    if (mainScreen) mainScreen.classList.remove('hidden');
 }
 
 async function submitSetupCode() {
     const code = document.getElementById('master-code').value;
-    if(code) await connection.invoke("SubmitSetupCode", code);
+    if (code) await connection.invoke("SubmitSetupCode", code);
 }
 
 async function registerUser() {
     const u = document.getElementById('reg-username').value;
     const p = document.getElementById('reg-password').value;
-    if(u && p) await connection.invoke("RegisterUser", u, p);
+    if (u && p) await connection.invoke("RegisterUser", u, p);
 }
 
 async function loginUser() {
     const u = document.getElementById('login-username').value;
     const p = document.getElementById('login-password').value;
-    if(u && p) await connection.invoke("Login", u, p);
+    if (u && p) await connection.invoke("Login", u, p);
 }
-
 
 async function disconnect() {
     if (connection) await connection.stop();
@@ -183,14 +181,18 @@ function checkConn() {
 }
 
 function wireActionButtons() {
+    // ✅ GUARD: tránh bind 2 lần khi SPA load lại
+    if (window.__mainWired) return;
+    window.__mainWired = true;
+
     const btnSetup = document.getElementById("btn-submit-setup");
-    if(btnSetup) btnSetup.addEventListener("click", submitSetupCode);
+    if (btnSetup) btnSetup.addEventListener("click", submitSetupCode);
 
     const btnReg = document.getElementById("btn-submit-register");
-    if(btnReg) btnReg.addEventListener("click", registerUser);
+    if (btnReg) btnReg.addEventListener("click", registerUser);
 
     const btnLogin = document.getElementById("btn-submit-login");
-    if(btnLogin) btnLogin.addEventListener("click", loginUser);
+    if (btnLogin) btnLogin.addEventListener("click", loginUser);
 
     document.getElementById("refreshAppsBtn").addEventListener("click", () => {
         if (checkConn()) {
@@ -277,53 +279,34 @@ function wireActionButtons() {
             const text = input.value.trim();
             if (!text) return;
 
-            // 1. Hiện tin nhắn user
-            if(window.ui && window.ui.addChatMessage) {
-                ui.addChatMessage(text, 'user');
-            }
+            if (window.ui && window.ui.addChatMessage) ui.addChatMessage(text, 'user');
             input.value = "";
 
-            // 2. Check kết nối
             if (!isConnected) {
-                if(window.ui) ui.addChatMessage("⚠️ Chưa kết nối Server!", 'bot');
+                if (window.ui) ui.addChatMessage("⚠️ Chưa kết nối Server!", 'bot');
                 return;
             }
 
-            // 3. Gửi lên Server
-            if(window.ui) ui.showTyping(true);
-            
+            if (window.ui) ui.showTyping(true);
+
             connection.invoke("ChatWithAi", text).catch(err => {
-                if(window.ui) {
+                if (window.ui) {
                     ui.showTyping(false);
                     ui.addChatMessage("Lỗi: " + err.toString(), 'bot');
                 }
             });
         });
     }
+
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn && window.spaGoLogin) {
-        logoutBtn.addEventListener("click", () => { window.spaGoLogin();
-        });
+        logoutBtn.addEventListener("click", () => window.spaGoLogin());
     }
 }
-
-// Gắn sự kiện cho nút Connect chính
-if(toggleConnectBtn) {
-    toggleConnectBtn.addEventListener("click", () => {
-        if (!isConnected) connect();
-        else disconnect();
-    });
-}
-
-// Khởi tạo các sự kiện khi trang web load xong
-//document.addEventListener("DOMContentLoaded", wireActionButtons);
 
 // Cho SPA gọi lại sau khi inject HTML
 window.initMainBindings = wireActionButtons;
 
-// Nếu chạy theo kiểu load trang bình thường thì vẫn ok
-if (document.readyState !== "loading") {
-  wireActionButtons();
-} else {
-  document.addEventListener("DOMContentLoaded", wireActionButtons);
-}
+if (window.__mainWired) return;
+window.__mainWired = true;
+

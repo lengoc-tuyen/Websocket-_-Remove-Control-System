@@ -1,218 +1,732 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <title>Trang chính – Christmas LAN Remote</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="style.css" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>Christmas LAN Remote – SPA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- MAIN CSS -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- SignalR -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+
+  <style>
+    /* ===== SPA helpers ===== */
+    .hidden { display: none !important; }
+
+    /* ===== LOGIN SCREEN (overlay riêng, không đụng body main) ===== */
+    #view-login{
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      overflow: hidden;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      background: url("../image/door-bg.jpg") center/cover no-repeat fixed;
+    }
+    #view-login::before{
+      content:"";
+      position: absolute;
+      inset:0;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6));
+      pointer-events:none;
+      z-index:0;
+    }
+
+    /* Wreath center */
+    #view-login .wreath-wrap {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index: 2;
+    }
+
+    #view-login .wreath {
+      width: 360px;
+      height: 360px;
+      background: url("../image/wreath.png") center/contain no-repeat;
+      position: relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,0.7));
+      animation: leds 2.2s ease-in-out infinite, wreath-drop 0.8s ease-out;
+    }
+
+    @keyframes leds {
+      0%, 100% { filter: drop-shadow(0 8px 22px rgba(239,68,68,0.7)); }
+      50%      { filter: drop-shadow(0 8px 26px rgba(250,204,21,0.95)); }
+    }
+    @keyframes wreath-drop {
+      0%   { transform: scale(0.7) translateY(-40px); opacity:0; }
+      70%  { transform: scale(1.05) translateY(6px);  opacity:1; }
+      100% { transform: scale(1)    translateY(0);    opacity:1; }
+    }
+
+    #view-login .wreath-inner {
+      width: 240px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:14px;
+      transform: translateY(10px);
+    }
+
+    #view-login .tabs {
+      display:flex;
+      gap:10px;
+      width:100%;
+    }
+
+    #view-login .tab-btn {
+      flex:1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.25);
+      color:#fff;
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s, background .15s;
+      text-shadow:0 1px 3px rgba(0,0,0,0.8);
+    }
+
+    #view-login .tab-btn.active {
+      background: rgba(255,255,255,0.92);
+      color:#111827;
+      text-shadow:none;
+    }
+
+    #view-login .field {
+      width:100%;
+      padding: 12px 10px;
+      border-radius: 12px;
+      border: 2px solid #ffffff;
+      background: rgba(255,255,255,0.92);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 800;
+      color: #111827;
+      outline: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    }
+    #view-login .field::placeholder { color:#6b7280; font-weight:700; }
+
+    #view-login .primary-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 1000;
+      background: #f97316;
+      border:none;
+      color:#111827;
+      cursor:pointer;
+      box-shadow:0 4px 14px rgba(0,0,0,0.5);
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    #view-login .primary-btn:hover {
+      background:#fb923c;
+      transform:translateY(-2px);
+      box-shadow:0 6px 18px rgba(0,0,0,0.7);
+    }
+
+    #view-login .hint {
+      font-size: 12px;
+      color:#e5e7eb;
+      text-shadow:0 1px 3px rgba(0,0,0,0.8);
+      text-align:center;
+      line-height: 1.35;
+    }
+
+    #view-login .msg {
+      width:100%;
+      font-size: 12px;
+      font-weight: 900;
+      text-align:center;
+      padding: 8px 10px;
+      border-radius: 12px;
+      display:none;
+    }
+    #view-login .msg.ok { background: rgba(34,197,94,0.2); color:#dcfce7; border:1px solid rgba(34,197,94,0.45); }
+    #view-login .msg.err { background: rgba(239,68,68,0.18); color:#fee2e2; border:1px solid rgba(239,68,68,0.45); }
+
+    /* snow flakes (login overlay + main đều dùng chung) */
+    .snowflake {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      animation: snow-spin 6s linear infinite;
+      opacity: .85;
+    }
+    @keyframes snow-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* ===== Snowman Chatbot (global) ===== */
+    #snowman-chatbot{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      user-select: none;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));
+    }
+    #snowman-chatbot .snowman-img{
+      width: 110px;
+      height: auto;
+    }
+    .chat-bubble{
+      position: relative;
+      background: rgba(255,255,255,0.92);
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+      border: 1px solid rgba(15,23,42,0.25);
+
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .35s ease, transform .35s ease;
+      white-space: nowrap;
+    }
+    .chat-bubble::after{
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0 6px;
+      border-style: solid;
+      border-color: rgba(255,255,255,0.92) transparent transparent transparent;
+    }
+
+    /* ===== Music toggle ===== */
+    #musicToggle {
+      position: fixed;
+      right: 16px;
+      bottom: 150px;
+      z-index: 9999;
+      border: none;
+      border-radius: 999px;
+      padding: 10px 12px;
+      font-weight: 900;
+      cursor: pointer;
+      background: rgba(255,255,255,0.92);
+      color: #111827;
+      box-shadow: 0 10px 20px rgba(0,0,0,.35);
+    }
+
+    /* responsive login */
+    @media (max-width: 768px) {
+      #view-login .wreath { width: 300px; height: 300px; }
+      #view-login .wreath-inner { width: 220px; }
+    }
+  </style>
 </head>
+
 <body>
-<header>
-    <div class="app-title">
-        🎄 <span>Christmas</span> LAN Remote
-    </div>
-    <div class="header-right">
-        <div class="ip-label">
-            Server IP: <input id="serverIpInput" value="192.168.1.99" placeholder="Nhập IP (vd: 192.168.1.5)" style="background:transparent; border:none; color:white; width: 140px; outline: none; font-weight: bold;" />
-        </div>
-        <div id="connectionStatus" style="display: flex; align-items: center; gap: 5px;">
-            <span id="statusDot" class="status-dot status-disconnected"></span>
-            <span id="statusText">Disconnected</span>
-        </div>
-        <button id="toggleConnectBtn" class="btn btn-primary">Kết nối</button>
-        <button id="logoutBtn" class="btn btn-danger btn-sm">
-  ⏻ Logout
-</button>
 
-
-    </div>
-</header>
-
-<div class="layout">
-    <main>
-        <div class="section-header">
-            <div>Đang điều khiển: <strong id="currentDeviceName">Server LAN</strong></div>
-            <small>Christmas Edition • WebSocket Realtime Control</small>
-        </div>
-
+<!-- ============ LOGIN VIEW (SPA) ============ -->
+<div id="view-login">
+  <div class="wreath-wrap">
+    <div class="wreath">
+      <div class="wreath-inner">
         <div class="tabs">
-            <button class="tab-btn active" data-target="appsSection"><span class="tab-icon">📦</span> App</button>
-            <button class="tab-btn" data-target="processesSection"><span class="tab-icon">⚙</span> Process</button>
-            <button class="tab-btn" data-target="screenSection"><span class="tab-icon">🖥</span> Screen</button>
-            <button class="tab-btn" data-target="keysSection"><span class="tab-icon">⌨</span> Keylog</button>
-            <button class="tab-btn" data-target="webcamSection"><span class="tab-icon">📷</span> Webcam</button>
-            <button class="tab-btn" data-target="powerSection"><span class="tab-icon">🔌</span> Power</button>
+          <button class="tab-btn active" id="tabLogin">Đăng nhập</button>
+          <button class="tab-btn" id="tabRegister">Đăng ký</button>
         </div>
 
-        <div class="tab-content">
-            <section id="appsSection" style="flex:1;">
-                <div class="gift-box active">
-                    <div class="gift-inner">
-                        <h2 style="font-size:15px; margin-bottom:6px;">📦 Quản lý ứng dụng (List / Start / Stop)</h2>
-                        <div class="section-actions">
-                            <button class="btn btn-primary btn-sm" id="refreshAppsBtn">Lấy danh sách App</button>
-                            <input type="text" id="appNameInput" placeholder="Tên App (vd: notepad)" class="text-black px-2 py-1 rounded text-sm" style="width: 150px;">
-                            <button class="btn btn-outline btn-sm" id="startAppBtn">Start App</button>
-                            <button class="btn btn-outline btn-sm" id="stopSelectedAppBtn">Stop App đã chọn</button>
-                        </div>
-                        <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
-                            <table>
-                                <thead>
-                                <tr>
-                                    <th style="width:30px;">Chọn</th>
-                                    <th>PID</th>
-                                    <th>Tên ứng dụng</th>
-                                    <th>Tiêu đề cửa sổ</th>
-                                    <th>RAM (MB)</th>
-                                </tr>
-                                </thead>
-                                <tbody id="appsTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
+        <div id="msg" class="msg"></div>
 
-            <section id="processesSection" style="display:none; flex:1;">
-            <div class="gift-box">
-                <div class="gift-inner">
-                    <h2 style="font-size:15px; margin-bottom:6px;">⚙ Quản lý tiến trình (List / Start / Stop)</h2>
-                    <div class="section-actions">
-                        <button class="btn btn-primary btn-sm" id="refreshProcessesBtn">Lấy danh sách Process</button>
+        <!-- LOGIN -->
+        <div id="loginForm">
+          <input class="field" type="text" id="loginUser" placeholder="Username" autocomplete="username" />
+          <input class="field" type="password" id="loginPass" placeholder="Password" autocomplete="current-password" />
+          <button class="primary-btn" id="loginBtn">Đăng nhập 🎄</button>
+          <div class="hint">Đăng nhập xong mới được vào hệ thống.</div>
+        </div>
 
-                        <!-- NEW: nhập tên process -->
-                        <input type="text" id="processNameInput"
-                            placeholder="Tên Process (vd: chrome.exe)"
-                            class="text-black px-2 py-1 rounded text-sm"
-                            style="width: 170px;">
+        <!-- REGISTER -->
+        <div id="registerForm" class="hidden">
+          <input class="field" type="text" id="regUser" placeholder="Username" autocomplete="username" />
+          <input class="field" type="password" id="regPass" placeholder="Password" autocomplete="new-password" />
+          <input class="field" type="text" id="regKey" placeholder="System Key (bắt buộc)" />
+          <button class="primary-btn" id="registerBtn">Đăng ký ❄</button>
+          <div class="hint">Đăng ký xong sẽ tự chuyển về tab Đăng nhập.</div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                        <!-- NEW: nút Start Process -->
-                        <button class="btn btn-outline btn-sm" id="startProcessBtn">Start Process</button>
+  <div style="position:fixed; left:0; right:0; bottom:10px; text-align:center; z-index:2; font-size:12px; color:#e5e7eb; text-shadow:0 1px 3px rgba(0,0,0,0.8);">
+    © Đồ án Mạng Máy Tính – Christmas LAN Remote ❄
+  </div>
+</div>
 
-                        <button class="btn btn-outline btn-sm" id="stopSelectedProcessBtn">Stop Process</button>
-                    </div>
-                    <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th style="width:30px;">Chọn</th>
-                                <th>PID</th>
-                                <th>Tên tiến trình</th>
-                                <th>RAM (MB)</th>
-                            </tr>
-                            </thead>
-                            <tbody id="processesTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
+<!-- ============ MAIN VIEW (SPA) ============ -->
+<div id="view-main" class="hidden">
+
+  <header>
+    <div class="app-title">
+      🎄 <span>Christmas</span> LAN Remote
+    </div>
+
+    <div class="header-right">
+      <div class="ip-label">
+        Server IP:
+        <input id="serverIpInput"
+               value="192.168.1.99"
+               placeholder="Nhập IP (vd: 192.168.1.5)"
+               style="background:transparent; border:none; color:white; width: 140px; outline: none; font-weight: bold;" />
+      </div>
+
+      <div id="connectionStatus" style="display: flex; align-items: center; gap: 5px;">
+        <span id="statusDot" class="status-dot status-disconnected"></span>
+        <span id="statusText">Disconnected</span>
+      </div>
+
+      <button id="toggleConnectBtn" class="btn btn-primary">Kết nối</button>
+      <button id="logoutBtn" class="btn btn-danger" title="Quay lại Login">⏻ Logout</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <main>
+      <div class="section-header">
+        <div>Đang điều khiển: <strong id="currentDeviceName">Server LAN</strong></div>
+        <small>Christmas Edition • WebSocket Realtime Control</small>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-target="appsSection"><span class="tab-icon">📦</span> App</button>
+        <button class="tab-btn" data-target="processesSection"><span class="tab-icon">⚙</span> Process</button>
+        <button class="tab-btn" data-target="screenSection"><span class="tab-icon">🖥</span> Screen</button>
+        <button class="tab-btn" data-target="keysSection"><span class="tab-icon">⌨</span> Keylog</button>
+        <button class="tab-btn" data-target="webcamSection"><span class="tab-icon">📷</span> Webcam</button>
+        <button class="tab-btn" data-target="powerSection"><span class="tab-icon">🔌</span> Power</button>
+      </div>
+
+      <div class="tab-content">
+        <!-- APPS -->
+        <section id="appsSection" style="flex:1;">
+          <div class="gift-box active">
+            <div class="gift-inner">
+              <h2 style="font-size:15px; margin-bottom:6px;">📦 Quản lý ứng dụng (List / Start / Stop)</h2>
+              <div class="section-actions">
+                <button class="btn btn-primary btn-sm" id="refreshAppsBtn">Lấy danh sách App</button>
+                <input type="text" id="appNameInput" placeholder="Tên App (vd: notepad)"
+                       class="text-black px-2 py-1 rounded text-sm" style="width: 150px;">
+                <button class="btn btn-outline btn-sm" id="startAppBtn">Start App</button>
+                <button class="btn btn-outline btn-sm" id="stopSelectedAppBtn">Stop App đã chọn</button>
+              </div>
+
+              <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                <table>
+                  <thead>
+                  <tr>
+                    <th style="width:30px;">Chọn</th>
+                    <th>PID</th>
+                    <th>Tên ứng dụng</th>
+                    <th>Tiêu đề cửa sổ</th>
+                    <th>RAM (MB)</th>
+                  </tr>
+                  </thead>
+                  <tbody id="appsTableBody"></tbody>
+                </table>
+              </div>
             </div>
+          </div>
         </section>
 
+        <!-- PROCESSES -->
+        <section id="processesSection" style="display:none; flex:1;">
+          <div class="gift-box">
+            <div class="gift-inner">
+              <h2 style="font-size:15px; margin-bottom:6px;">⚙ Quản lý tiến trình (List / Start / Stop)</h2>
+              <div class="section-actions">
+                <button class="btn btn-primary btn-sm" id="refreshProcessesBtn">Lấy danh sách Process</button>
 
-            <section id="screenSection" style="display:none; flex:1;">
-                <div class="gift-box">
-                    <div class="gift-inner">
-                        <h2 style="font-size:15px; margin-bottom:6px;">🖥 Chụp màn hình từ xa</h2>
-                        <div class="section-actions">
-                            <button class="btn btn-primary btn-sm" id="captureScreenBtn">Chụp màn hình (Snapshot)</button>
-                        </div>
-                        <div style="text-align:center;">
-                            <img id="screenPreview" src="" alt="Chưa có ảnh màn hình..." />
-                        </div>
-                    </div>
-                </div>
-            </section>
+                <input type="text" id="processNameInput"
+                       placeholder="Tên Process (vd: chrome.exe)"
+                       class="text-black px-2 py-1 rounded text-sm"
+                       style="width: 170px;">
 
-            <section id="keysSection" style="display:none; flex:1;">
-                <div class="gift-box">
-                    <div class="gift-inner">
-                        <h2 style="font-size:15px; margin-bottom:6px;">⌨ Keylogger</h2>
-                        <div class="section-actions">
-                            <button class="btn btn-primary btn-sm" id="startKeylogBtn">Bắt đầu</button>
-                            <button class="btn btn-outline btn-sm" id="stopKeylogBtn">Dừng</button>
-                            <button class="btn btn-outline btn-sm" id="clearKeylogBtn">Xoá log</button>
-                        </div>
-                        <textarea id="keylogArea" readonly class="w-full h-64 border p-2 bg-gray-900 text-green-400 font-mono text-sm rounded resize-none mt-2"></textarea>
-                    </div>
-                </div>
-            </section>
+                <button class="btn btn-outline btn-sm" id="startProcessBtn">Start Process</button>
+                <button class="btn btn-outline btn-sm" id="stopSelectedProcessBtn">Stop Process</button>
+              </div>
 
-            <section id="webcamSection" style="display:none; flex:1;">
-                <div class="gift-box">
-                    <div class="gift-inner">
-                        <h2 style="font-size:15px; margin-bottom:6px;">📷 Webcam (Quay bằng chứng 3s)</h2>
-                        <div class="section-actions">
-                            <button class="btn btn-primary btn-sm" id="webcamOnBtn">Mở Cam & Quay 3s</button>
-                            <button class="btn btn-outline btn-sm" id="webcamOffBtn">Tắt Cam</button>
-                        </div>
-                        <div style="min-height: 300px; background: #000; display:flex; align-items:center; justify-content:center; margin-top: 10px; border-radius: 8px;">
-                            <img id="webcamPreview" src="" style="max-width:100%; max-height:340px;" alt="Video Stream" />
-                        </div>
-                    </div>
-                </div>
-            </section>
+              <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                <table>
+                  <thead>
+                  <tr>
+                    <th style="width:30px;">Chọn</th>
+                    <th>PID</th>
+                    <th>Tên tiến trình</th>
+                    <th>RAM (MB)</th>
+                  </tr>
+                  </thead>
+                  <tbody id="processesTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
 
-            <section id="powerSection" style="display:none; flex:1;">
-                <div class="gift-box">
-                    <div class="gift-inner">
-                        <h2 style="font-size:15px; margin-bottom:6px;">🔌 Điều khiển nguồn</h2>
-                        <div style="display: flex; gap: 20px; margin-top: 20px;">
-                            <div style="flex:1; background:#020617; padding:15px; border-radius:12px; border:1px dashed #facc15;">
-                                <h3 style="color:#facc15; margin-bottom:10px;">Restart</h3>
-                                <p style="font-size:13px; color:#9ca3af; margin-bottom:15px;">Khởi động lại máy Server.</p>
-                                <button class="btn btn-warning btn-sm" id="restartBtn" style="width:100%">Gửi lệnh Restart</button>
-                            </div>
-                            <div style="flex:1; background:#020617; padding:15px; border-radius:12px; border:1px dashed #ef4444;">
-                                <h3 style="color:#ef4444; margin-bottom:10px;">Shutdown</h3>
-                                <p style="font-size:13px; color:#9ca3af; margin-bottom:15px;">Tắt máy Server hoàn toàn.</p>
-                                <button class="btn btn-danger btn-sm" id="shutdownBtn" style="width:100%">Gửi lệnh Shutdown</button>
-                            </div>
-                        </div>
-                    </div>
+        <!-- SCREEN -->
+        <section id="screenSection" style="display:none; flex:1;">
+          <div class="gift-box">
+            <div class="gift-inner">
+              <h2 style="font-size:15px; margin-bottom:6px;">🖥 Chụp màn hình từ xa</h2>
+              <div class="section-actions">
+                <button class="btn btn-primary btn-sm" id="captureScreenBtn">Chụp màn hình (Snapshot)</button>
+              </div>
+              <div style="text-align:center;">
+                <img id="screenPreview" src="" alt="Chưa có ảnh màn hình..." />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- KEYLOG -->
+        <section id="keysSection" style="display:none; flex:1;">
+          <div class="gift-box">
+            <div class="gift-inner">
+              <h2 style="font-size:15px; margin-bottom:6px;">⌨ Keylogger</h2>
+              <div class="section-actions">
+                <button class="btn btn-primary btn-sm" id="startKeylogBtn">Bắt đầu</button>
+                <button class="btn btn-outline btn-sm" id="stopKeylogBtn">Dừng</button>
+                <button class="btn btn-outline btn-sm" id="clearKeylogBtn">Xoá log</button>
+              </div>
+              <textarea id="keylogArea" readonly
+                        class="w-full h-64 border p-2 bg-gray-900 text-green-400 font-mono text-sm rounded resize-none mt-2"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <!-- WEBCAM -->
+        <section id="webcamSection" style="display:none; flex:1;">
+          <div class="gift-box">
+            <div class="gift-inner">
+              <h2 style="font-size:15px; margin-bottom:6px;">📷 Webcam (Quay bằng chứng 3s)</h2>
+              <div class="section-actions">
+                <button class="btn btn-primary btn-sm" id="webcamOnBtn">Mở Cam & Quay 3s</button>
+                <button class="btn btn-outline btn-sm" id="webcamOffBtn">Tắt Cam</button>
+              </div>
+              <div style="min-height: 300px; background: #000; display:flex; align-items:center; justify-content:center; margin-top: 10px; border-radius: 8px;">
+                <img id="webcamPreview" src="" style="max-width:100%; max-height:340px;" alt="Video Stream" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- POWER -->
+        <section id="powerSection" style="display:none; flex:1;">
+          <div class="gift-box">
+            <div class="gift-inner">
+              <h2 style="font-size:15px; margin-bottom:6px;">🔌 Điều khiển nguồn</h2>
+              <div style="display: flex; gap: 20px; margin-top: 20px;">
+                <div style="flex:1; background:#020617; padding:15px; border-radius:12px; border:1px dashed #facc15;">
+                  <h3 style="color:#facc15; margin-bottom:10px;">Restart</h3>
+                  <p style="font-size:13px; color:#9ca3af; margin-bottom:15px;">Khởi động lại máy Server.</p>
+                  <button class="btn btn-warning btn-sm" id="restartBtn" style="width:100%">Gửi lệnh Restart</button>
                 </div>
-            </section>
-        </div>
+                <div style="flex:1; background:#020617; padding:15px; border-radius:12px; border:1px dashed #ef4444;">
+                  <h3 style="color:#ef4444; margin-bottom:10px;">Shutdown</h3>
+                  <p style="font-size:13px; color:#9ca3af; margin-bottom:15px;">Tắt máy Server hoàn toàn.</p>
+                  <button class="btn btn-danger btn-sm" id="shutdownBtn" style="width:100%">Gửi lệnh Shutdown</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
     </main>
-</div>
+  </div>
 
-<div class="status-bar">
+  <div class="status-bar">
     <span id="statusBarText">Sẵn sàng kết nối...</span>
     <span id="lastUpdated" style="color: #9ca3af;"></span>
+  </div>
 </div>
 
+<!-- ===== Global Audio ===== -->
+<audio id="bgMusic" src="../music.mp3" loop preload="auto"></audio>
+<button id="musicToggle" type="button">🔊</button>
+
+<!-- ===== Snowman Chatbot ===== -->
+<div id="snowman-chatbot" title="Chatbot">
+  <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
+  <img src="giphy.gif" alt="Snowman Chatbot" class="snowman-img">
+</div>
+
+<audio id="bellSound" src="../bell.mp3" preload="auto"></audio>
+
+<!-- MAIN JS (cần DOM main tồn tại trước khi load) -->
 <script src="ui.js"></script>
 <script src="connection.js"></script>
 
-<!-- Snowman Chatbot -->
-<div id="snowman-chatbot">
-    <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
-    <img src="giphy.gif" alt="Snowman Chatbot" class="snowman-img">
-</div>
-
-<audio id="bgMusic" src="../music.mp3" loop preload="auto"></audio>
 <script>
+  /* ================== CONFIG (LOGIN LOCAL) ================== */
+  const PUBLISHER_SYSTEM_KEY = "DATDINHTUYEN";   // đổi key tại đây
+  const LS_USERS   = "lan_remote_users";         // { username: password }
+  const LS_SESSION = "lan_remote_logged_in";     // username
+
+  // BẮT BUỘC login mỗi lần mở app.html
+  localStorage.removeItem(LS_SESSION);
+
+  /* ================== HELPERS ================== */
+  const viewLogin = document.getElementById("view-login");
+  const viewMain  = document.getElementById("view-main");
+
+  function showLoginView(){
+    viewMain.classList.add("hidden");
+    viewLogin.classList.remove("hidden");
+  }
+  function showMainView(){
+    viewLogin.classList.add("hidden");
+    viewMain.classList.remove("hidden");
+  }
+
+  function loadUsers() {
+    try { return JSON.parse(localStorage.getItem(LS_USERS) || "{}"); }
+    catch { return {}; }
+  }
+  function saveUsers(users) {
+    localStorage.setItem(LS_USERS, JSON.stringify(users));
+  }
+
+  const tabLogin = document.getElementById("tabLogin");
+  const tabRegister = document.getElementById("tabRegister");
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const msgBox = document.getElementById("msg");
+
+  function setTab(mode) {
+    const isLogin = mode === "login";
+    tabLogin.classList.toggle("active", isLogin);
+    tabRegister.classList.toggle("active", !isLogin);
+
+    loginForm.classList.toggle("hidden", !isLogin);
+    registerForm.classList.toggle("hidden", isLogin);
+
+    msgBox.style.display = "none";
+  }
+
+  function showMsg(text, type) {
+    msgBox.textContent = text;
+    msgBox.className = "msg " + (type === "ok" ? "ok" : "err");
+    msgBox.style.display = "block";
+  }
+
+  tabLogin.addEventListener("click", () => setTab("login"));
+  tabRegister.addEventListener("click", () => setTab("register"));
+
+  /* ================== REGISTER ================== */
+  document.getElementById("registerBtn").addEventListener("click", () => {
+    const u = document.getElementById("regUser").value.trim();
+    const p = document.getElementById("regPass").value.trim();
+    const k = document.getElementById("regKey").value.trim();
+
+    if (!u || !p || !k) return showMsg("Vui lòng nhập đủ Username, Password và System Key.", "err");
+    if (k !== PUBLISHER_SYSTEM_KEY) return showMsg("System Key không đúng. Bạn cần key từ nhà phát hành.", "err");
+
+    const users = loadUsers();
+    if (users[u]) return showMsg("Username đã tồn tại. Hãy chọn tên khác.", "err");
+
+    users[u] = p; // demo localStorage (thật thì backend + hash)
+    saveUsers(users);
+
+    showMsg("Đăng ký thành công! Chuyển sang Đăng nhập…", "ok");
+    setTimeout(() => {
+      setTab("login");
+      document.getElementById("loginUser").value = u;
+      document.getElementById("loginPass").focus();
+    }, 700);
+  });
+
+  /* ================== LOGIN ================== */
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    const u = document.getElementById("loginUser").value.trim();
+    const p = document.getElementById("loginPass").value.trim();
+
+    if (!u || !p) return showMsg("Vui lòng nhập Username và Password.", "err");
+
+    const users = loadUsers();
+    if (!users[u] || users[u] !== p) return showMsg("Sai username hoặc password.", "err");
+
+    localStorage.setItem(LS_SESSION, u);
+    showMsg("Đăng nhập thành công! 🎄", "ok");
+
+    // vào main (SPA toggle)
+    showMainView();
+  });
+
+  // Enter submit
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    if (!viewLogin.classList.contains("hidden")) {
+      if (!loginForm.classList.contains("hidden")) document.getElementById("loginBtn").click();
+      else document.getElementById("registerBtn").click();
+    }
+  });
+
+  /* ================== LOGOUT (SPA) ================== */
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    // nếu đang connected thì ngắt (connection.js có disconnect())
+    try { if (typeof disconnect === "function") disconnect(); } catch {}
+    localStorage.removeItem(LS_SESSION);
+    showLoginView();
+    setTab("login");
+  });
+
+  /* ================== FIX: Start Process button hook (bù cho connection.js) ================== */
+  // connection.js hiện chưa bind startProcessBtn => mình bind thêm ở đây cho chắc
+  document.addEventListener("DOMContentLoaded", () => {
+    const startProcessBtn = document.getElementById("startProcessBtn");
+    if (startProcessBtn) {
+      startProcessBtn.addEventListener("click", () => {
+        const name = document.getElementById("processNameInput").value.trim();
+        if (!name) return alert("Vui lòng nhập tên process!");
+        try {
+          if (typeof checkConn === "function" && !checkConn()) return;
+          if (typeof connection !== "undefined" && connection) connection.invoke("StartProcess", name);
+        } catch (e) {
+          alert("Chưa kết nối Server hoặc lỗi invoke. Hãy bấm Kết nối trước!");
+        }
+      });
+    }
+  });
+
+  /* ================== SNOW (global) ================== */
+  (function createSnow() {
+    const numFlakes = 30;
+    const flakes = [];
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+
+    for (let i = 0; i < numFlakes; i++) {
+      const img = document.createElement("img");
+      img.src = "../image/snow.png";
+      img.className = "snowflake";
+
+      const size = Math.random() * 25 + 18;
+      img.style.width = size + "px";
+
+      img.style.top = Math.random() * h + "px";
+      img.style.left = Math.random() * w + "px";
+      img.style.opacity = (Math.random() * 0.6 + 0.25).toString();
+
+      document.body.appendChild(img);
+      flakes.push({
+        el: img,
+        speed: Math.random() * 1.5 + 0.5,
+        drift: Math.random() * 0.6 + 0.2
+      });
+    }
+
+    function animate() {
+      const h = window.innerHeight;
+      const w = window.innerWidth;
+
+      flakes.forEach(flake => {
+        let top = parseFloat(flake.el.style.top);
+        let left = parseFloat(flake.el.style.left);
+
+        top += flake.speed;
+        left += Math.sin(top / 40) * flake.drift;
+
+        if (top > h) {
+          top = -50;
+          left = Math.random() * w;
+        }
+
+        flake.el.style.top = top + "px";
+        flake.el.style.left = left + "px";
+      });
+
+      requestAnimationFrame(animate);
+    }
+    animate();
+  })();
+
+  /* ================== CHATBOT: hello every 5s ================== */
+  (function () {
+    const bubble = document.getElementById("snowmanBubble");
+    const bot = document.getElementById("snowman-chatbot");
+    if (!bubble || !bot) return;
+
+    function showHello(text="Xin chào") {
+      bubble.textContent = text;
+      bubble.style.opacity = "1";
+      bubble.style.transform = "translateY(0)";
+      setTimeout(() => {
+        bubble.style.opacity = "0";
+        bubble.style.transform = "translateY(10px)";
+      }, 2000);
+    }
+
+    showHello();
+    setInterval(() => showHello("Xin chào"), 5000);
+
+    bot.addEventListener("click", () => showHello("Bạn cần mình giúp gì nè? 🤖"));
+  })();
+
+  /* ================== MUSIC: autoplay best-effort + toggle ================== */
   (function () {
     const bg = document.getElementById("bgMusic");
-    if (!bg) return;
+    const btn = document.getElementById("musicToggle");
+    if (!bg || !btn) return;
 
-    bg.volume = 0.35; // chỉnh nhỏ vừa nghe
+    bg.volume = 0.35;
 
-    // thử chạy ngay khi load (có thể bị chặn)
+    function setBtn() {
+      btn.textContent = bg.muted ? "🔇" : "🔊";
+    }
+
+    // cố gắng play ngay (có thể bị chặn)
     bg.play().catch(() => {});
 
-    // nếu bị chặn, chỉ cần 1 tương tác là chạy
+    // nếu bị chặn thì chỉ cần 1 tương tác để bật
     const startOnce = () => {
       bg.play().catch(() => {});
       window.removeEventListener("click", startOnce);
       window.removeEventListener("keydown", startOnce);
       window.removeEventListener("touchstart", startOnce);
     };
-
     window.addEventListener("click", startOnce);
     window.addEventListener("keydown", startOnce);
     window.addEventListener("touchstart", startOnce);
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      bg.muted = !bg.muted;
+      setBtn();
+      if (!bg.muted) bg.play().catch(() => {});
+    });
+
+    setBtn();
   })();
+
+  /* ================== INIT: always start at login ================== */
+  showLoginView();
+  setTab("login");
 </script>
 
 </body>

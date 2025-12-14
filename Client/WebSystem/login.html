@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Đăng nhập – Christmas LAN Remote</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -28,7 +29,7 @@
       position: fixed;
       top: 26vh;
       left: 50%;
-      transform: translateX(-50%);
+      transform: translate(-50%, -50%);
       display:flex;
       flex-direction:column;
       align-items:center;
@@ -37,8 +38,8 @@
     }
 
     .wreath {
-      width: 290px;
-      height: 290px;
+      width: 340px;
+      height: 340px;
       background: url("image/wreath.png") center/contain no-repeat;
       position: relative;
       display:flex;
@@ -60,24 +61,23 @@
     }
 
     .wreath-inner {
-      width: 210px;
+      width: 240px;
       display:flex;
       flex-direction:column;
       align-items:center;
       gap:14px;
-      transform: translateY(6px);
+      transform: translateY(8px);
     }
 
     .tabs {
       display:flex;
       gap:8px;
       width:100%;
-      margin-bottom: 2px;
     }
 
     .tab-btn {
       flex:1;
-      padding: 8px 10px;
+      padding: 10px 10px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.7);
       background: rgba(255,255,255,0.25);
@@ -87,34 +87,31 @@
       transition: transform .15s, background .15s;
       text-shadow:0 1px 3px rgba(0,0,0,0.8);
     }
-
     .tab-btn.active {
       background: rgba(255,255,255,0.9);
       color:#111827;
       text-shadow:none;
     }
-
     .tab-btn:hover { transform: translateY(-1px); }
 
     .field {
       width:100%;
-      padding: 10px 10px;
-      border-radius: 10px;
+      padding: 12px 10px;
+      border-radius: 12px;
       border: 2px solid #ffffff;
       background: rgba(255,255,255,0.92);
       text-align: center;
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
       color: #111827;
       outline: none;
       box-shadow: 0 4px 12px rgba(0,0,0,0.35);
     }
-
-    .field::placeholder { color:#6b7280; font-weight:600; }
+    .field::placeholder { color:#6b7280; font-weight:700; }
 
     .primary-btn {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       border-radius: 999px;
       font-size: 14px;
       font-weight: 900;
@@ -125,7 +122,6 @@
       box-shadow:0 4px 14px rgba(0,0,0,0.5);
       transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
     }
-
     .primary-btn:hover {
       background:#fb923c;
       transform:translateY(-2px);
@@ -146,11 +142,10 @@
       font-size: 12px;
       font-weight: 800;
       text-align:center;
-      padding: 6px 8px;
-      border-radius: 10px;
+      padding: 8px 10px;
+      border-radius: 12px;
       display:none;
     }
-
     .msg.ok { background: rgba(34,197,94,0.2); color:#dcfce7; border:1px solid rgba(34,197,94,0.45); }
     .msg.err { background: rgba(239,68,68,0.18); color:#fee2e2; border:1px solid rgba(239,68,68,0.45); }
 
@@ -174,495 +169,271 @@
       z-index: 1;
       animation: snow-spin 6s linear infinite;
     }
-
-    @keyframes snow-spin {
-      from { transform: rotate(0deg); }
-      to   { transform: rotate(360deg); }
-    }
+    @keyframes snow-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
     /* Door opening transition */
     body.door-opening .wreath-wrap .wreath { animation: wreath-zoom 0.9s ease-in forwards; }
-
     @keyframes wreath-zoom {
       0%   { transform: scale(1) translateY(0);    opacity:1; }
       40%  { transform: scale(1.15) translateY(-10px); }
       100% { transform: scale(0.4) translateY(-120px); opacity:0; }
     }
-
     body.door-opening::before { animation: fadeout-bg 0.9s ease-in forwards; }
-
     @keyframes fadeout-bg {
       0%   { background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6)); }
       100% { background: rgba(15,23,42,1); }
     }
 
     @media (max-width: 768px) {
-      .wreath-wrap { top: 22vh; }
-      .wreath { width: 250px; height: 250px; }
-      .wreath-inner { width: 200px; }
+      .wreath-wrap { top: 48%; }
+      .wreath { width: 300px; height: 300px; }
+      .wreath-inner { width: 220px; }
     }
 
     /* Snowman Chatbot */
-        #snowman-chatbot{
-            position: fixed;
-            right: 16px;
-            bottom: 16px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .snowman-img{
-            width: 110px;
-            height: auto;
-            cursor: pointer;
-            user-select: none;
-            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));
-        }
-
-        .chat-bubble{
-            position: relative;
-            background: rgba(255,255,255,0.92);
-            color: #111827;
-            padding: 6px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 700;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.4);
-            border: 1px solid rgba(15,23,42,0.25);
-
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity .35s ease, transform .35s ease;
-            white-space: nowrap;
-        }
-
-        .chat-bubble::after{
-            content: "";
-            position: absolute;
-            bottom: -6px;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px 6px 0 6px;
-            border-style: solid;
-            border-color: rgba(255,255,255,0.92) transparent transparent transparent;
-        }
-        .login-btn-wrap {
-          width: 100%;
-          margin-top: 8px;
-          display: flex;
-          justify-content: center;
-        }
-
-        .login-btn-wrap .primary-btn {
-          width: 90%;
-        }
-
+    #snowman-chatbot{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .snowman-img{
+      width: 110px;
+      height: auto;
+      cursor: pointer;
+      user-select: none;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));
+    }
+    .chat-bubble{
+      position: relative;
+      background: rgba(255,255,255,0.92);
+      color: #111827;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+      border: 1px solid rgba(15,23,42,0.25);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity .35s ease, transform .35s ease;
+      white-space: nowrap;
+    }
+    .chat-bubble::after{
+      content: "";
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 6px 6px 0 6px;
+      border-style: solid;
+      border-color: rgba(255,255,255,0.92) transparent transparent transparent;
+    }
   </style>
 </head>
+
 <body>
+  <!-- LOGIN VIEW -->
+  <div id="view-login">
+    <div class="wreath-wrap">
+      <div class="wreath">
+        <div class="wreath-inner">
+          <div class="tabs">
+            <button class="tab-btn active" id="tabLogin">Đăng nhập</button>
+            <button class="tab-btn" id="tabRegister">Đăng ký</button>
+          </div>
 
-<div id="view-login">
-<div class="wreath-wrap">
-  <div class="wreath">
-    <div class="wreath-inner">
+          <div id="msg" class="msg"></div>
 
-      <!-- Tabs -->
-      <div class="tabs">
-        <button class="tab-btn active" id="tabLogin">Đăng nhập</button>
-        <button class="tab-btn" id="tabRegister">Đăng ký</button>
+          <div id="loginForm">
+            <input class="field" type="text" id="loginUser" placeholder="Username" autocomplete="username" />
+            <input class="field" type="password" id="loginPass" placeholder="Password" autocomplete="current-password" />
+            <button class="primary-btn" id="loginBtn">Đăng nhập 🎄</button>
+            <div class="hint">Đăng nhập xong mới được vào hệ thống.</div>
+          </div>
+
+          <div id="registerForm" style="display:none;">
+            <input class="field" type="text" id="regUser" placeholder="Username" autocomplete="username" />
+            <input class="field" type="password" id="regPass" placeholder="Password" autocomplete="new-password" />
+            <input class="field" type="text" id="regKey" placeholder="System Key (bắt buộc)" />
+            <button class="primary-btn" id="registerBtn">Đăng ký ❄</button>
+            <div class="hint">Đăng ký xong sẽ tự chuyển về tab Đăng nhập.</div>
+          </div>
+        </div>
       </div>
-
-      <!-- Message -->
-      <div id="msg" class="msg"></div>
-
-      <!-- LOGIN FORM -->
-      <div id="loginForm">
-        <input class="field" type="text" id="loginUser" placeholder="Username" autocomplete="username" />
-        <input class="field" type="password" id="loginPass" placeholder="Password" autocomplete="current-password" />
-        
-        <div class="hint">Đăng nhập xong mới được vào hệ thống.</div>
-      </div>
-
-      <button class="primary-btn" id="loginBtn">Đăng nhập 🎄</button>
-
-      <!-- REGISTER FORM -->
-      <div id="registerForm" style="display:none;">
-        <input class="field" type="text" id="regUser" placeholder="Username" autocomplete="username" />
-        <input class="field" type="password" id="regPass" placeholder="Password" autocomplete="new-password" />
-        <input class="field" type="text" id="regKey" placeholder="System Key (bắt buộc)" />
-        <button class="primary-btn" id="registerBtn">Đăng ký ❄</button>
-        <div class="hint">Đăng ký xong sẽ tự chuyển về tab Đăng nhập.</div>
-      </div>
-
     </div>
+
+    <div class="bottom-links">© Đồ án Mạng Máy Tính – Christmas LAN Remote ❄</div>
   </div>
-</div>
 
+  <!-- MAIN VIEW (SPA inject vào đây) -->
+  <div id="view-main" style="display:none;"></div>
 
-<div class="bottom-links">
-  © Đồ án Mạng Máy Tính – Christmas LAN Remote ❄
-</div>
+  <audio id="bellSound" src="bell.mp3" preload="auto"></audio>
 
-</div>
-<div id="view-main" style="display:none;"></div>
-<audio id="bellSound" src="bell.mp3" preload="auto"></audio>
+  <!-- Background Music -->
+  <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
 
-<script>
-  // ================== CONFIG ==================
-  // Mã system key từ "nhà phát hành". Demo: bạn đổi tại đây.
-  const PUBLISHER_SYSTEM_KEY = "DATDINHTUYEN";
+  <!-- Snowman Chatbot -->
+  <div id="snowman-chatbot">
+    <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
+    <img src="MainWeb/giphy.gif" alt="Snowman Chatbot" class="snowman-img">
+  </div>
 
-  // LocalStorage keys
-  const LS_USERS = "lan_remote_users";          // { username: password }
-  const LS_SESSION = "lan_remote_logged_in";    // username
-  // BẮT BUỘC đăng nhập mỗi lần vào ip.html
-  localStorage.removeItem(LS_SESSION);
+  <script>
+    // ================== CONFIG ==================
+    const PUBLISHER_SYSTEM_KEY = "DATDINHTUYEN";
+    const LS_USERS   = "lan_remote_users";          // { username: password }
+    const LS_SESSION = "lan_remote_logged_in";      // username
 
+    // BẮT BUỘC login mỗi lần vào trang (bạn đang làm đúng ý này)
+    localStorage.removeItem(LS_SESSION);
 
-  // ================== SNOW ==================
-  (function createSnow() {
-    const numFlakes = 30;
-    const flakes = [];
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-
-    for (let i = 0; i < numFlakes; i++) {
-      const img = document.createElement("img");
-      img.src = "image/snow.png";
-      img.className = "snowflake";
-
-      const size = Math.random() * 25 + 20; // 20–45px
-      img.style.width = size + "px";
-
-      img.style.top = Math.random() * h + "px";
-      img.style.left = Math.random() * w + "px";
-      img.style.opacity = (Math.random() * 0.7 + 0.3).toString();
-
-      document.body.appendChild(img);
-      flakes.push({
-        el: img,
-        speed: Math.random() * 1.5 + 0.5,
-        drift: Math.random() * 0.6 + 0.2
-      });
-    }
-
-    function animate() {
-      const h = window.innerHeight;
+    // ================== SNOW ==================
+    (function createSnow() {
+      const numFlakes = 30;
+      const flakes = [];
       const w = window.innerWidth;
+      const h = window.innerHeight;
 
-      flakes.forEach(flake => {
-        let top = parseFloat(flake.el.style.top);
-        let left = parseFloat(flake.el.style.left);
+      for (let i = 0; i < numFlakes; i++) {
+        const img = document.createElement("img");
+        img.src = "image/snow.png";
+        img.className = "snowflake";
 
-        top += flake.speed;
-        left += Math.sin(top / 40) * flake.drift;
+        const size = Math.random() * 25 + 20;
+        img.style.width = size + "px";
+        img.style.top = Math.random() * h + "px";
+        img.style.left = Math.random() * w + "px";
+        img.style.opacity = (Math.random() * 0.7 + 0.3).toString();
 
-        if (top > h) {
-          top = -50;
-          left = Math.random() * w;
-        }
+        document.body.appendChild(img);
+        flakes.push({ el: img, speed: Math.random() * 1.5 + 0.5, drift: Math.random() * 0.6 + 0.2 });
+      }
 
-        flake.el.style.top = top + "px";
-        flake.el.style.left = left + "px";
-      });
+      function animate() {
+        const h = window.innerHeight;
+        const w = window.innerWidth;
 
-      requestAnimationFrame(animate);
-    }
+        flakes.forEach(flake => {
+          let top = parseFloat(flake.el.style.top);
+          let left = parseFloat(flake.el.style.left);
 
-    animate();
-  })();
+          top += flake.speed;
+          left += Math.sin(top / 40) * flake.drift;
 
-  // ================== UI HELPERS ==================
-  const tabLogin = document.getElementById("tabLogin");
-  const tabRegister = document.getElementById("tabRegister");
-  const loginForm = document.getElementById("loginForm");
-  const registerForm = document.getElementById("registerForm");
-  const msgBox = document.getElementById("msg");
+          if (top > h) { top = -50; left = Math.random() * w; }
 
-  const bell = document.getElementById("bellSound");
+          flake.el.style.top = top + "px";
+          flake.el.style.left = left + "px";
+        });
 
-  function setTab(mode) {
-    const isLogin = mode === "login";
-    tabLogin.classList.toggle("active", isLogin);
-    tabRegister.classList.toggle("active", !isLogin);
-    loginForm.style.display = isLogin ? "block" : "none";
-    registerForm.style.display = isLogin ? "none" : "block";
-    hideMsg();
-  }
+        requestAnimationFrame(animate);
+      }
+      animate();
+    })();
 
-  function showMsg(text, type) {
-    msgBox.textContent = text;
-    msgBox.className = "msg " + (type === "ok" ? "ok" : "err");
-    msgBox.style.display = "block";
-  }
+    // ================== MUSIC AUTOPLAY (bị browser chặn nếu chưa tương tác) ==================
+    (function () {
+      const bg = document.getElementById("bgMusic");
+      if (!bg) return;
+      bg.volume = 0.35;
 
-  function hideMsg() {
-    msgBox.style.display = "none";
-  }
-
-  function loadUsers() {
-    try {
-      return JSON.parse(localStorage.getItem(LS_USERS) || "{}");
-    } catch {
-      return {};
-    }
-  }
-
-  function saveUsers(users) {
-    localStorage.setItem(LS_USERS, JSON.stringify(users));
-  }
-
-  // function openDoorAndGo() {
-  //   try { bell.currentTime = 0; bell.play(); } catch (e) {}
-  //   document.body.classList.add("door-opening");
-  //   setTimeout(() => {
-  //     // Trang bạn muốn tới sau khi đăng nhập
-  //     window.location.href = "MainWeb/index.html";
-  //   }, 900);
-  // }
-    function openDoorAndGo() {
-    try { bell.currentTime = 0; bell.play(); } catch (e) {}
-    document.body.classList.add("door-opening");
-
-    setTimeout(() => {
-      spaLoadMain(); // ✅ SPA: không chuyển trang nữa
-    }, 900);
-  }
-
-
-  // ================== TAB EVENTS ==================
-  tabLogin.addEventListener("click", () => setTab("login"));
-  tabRegister.addEventListener("click", () => setTab("register"));
-
-  // ================== REGISTER ==================
-  document.getElementById("registerBtn").addEventListener("click", () => {
-    const u = document.getElementById("regUser").value.trim();
-    const p = document.getElementById("regPass").value.trim();
-    const k = document.getElementById("regKey").value.trim();
-
-    if (!u || !p || !k) {
-      showMsg("Vui lòng nhập đủ Username, Password và System Key.", "err");
-      return;
-    }
-    if (k !== PUBLISHER_SYSTEM_KEY) {
-      showMsg("System Key không đúng. Bạn cần key từ nhà phát hành.", "err");
-      return;
-    }
-
-    const users = loadUsers();
-    if (users[u]) {
-      showMsg("Username đã tồn tại. Hãy chọn tên khác.", "err");
-      return;
-    }
-
-    users[u] = p; // demo: lưu plain text. Backend thật thì hash nhé.
-    saveUsers(users);
-
-    showMsg("Đăng ký thành công! Chuyển sang Đăng nhập…", "ok");
-    setTimeout(() => {
-      setTab("login");
-      document.getElementById("loginUser").value = u;
-      document.getElementById("loginPass").focus();
-    }, 800);
-  });
-
-  // ================== LOGIN ==================
-  document.getElementById("loginBtn").addEventListener("click", () => {
-    const u = document.getElementById("loginUser").value.trim();
-    const p = document.getElementById("loginPass").value.trim();
-
-    if (!u || !p) {
-      showMsg("Vui lòng nhập Username và Password.", "err");
-      return;
-    }
-
-    const users = loadUsers();
-    if (!users[u] || users[u] !== p) {
-      showMsg("Sai username hoặc password.", "err");
-      return;
-    }
-
-    localStorage.setItem(LS_SESSION, u);
-    showMsg("Đăng nhập thành công! Đang vào hệ thống…", "ok");
-    openDoorAndGo();
-  });
-
-  // Enter to submit
-  document.addEventListener("keydown", (e) => {
-    if (e.key !== "Enter") return;
-    if (loginForm.style.display !== "none") {
-      document.getElementById("loginBtn").click();
-    } else {
-      document.getElementById("registerBtn").click();
-    }
-  });
-</script>
-
-<!-- Background Music -->
-<audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
-
-<script>
-  (function () {
-    const bg = document.getElementById("bgMusic");
-    if (!bg) return;
-
-    bg.volume = 0.35; // chỉnh nhỏ vừa nghe
-
-    // thử chạy ngay khi load (có thể bị chặn)
-    bg.play().catch(() => {});
-
-    // nếu bị chặn, chỉ cần 1 tương tác là chạy
-    const startOnce = () => {
       bg.play().catch(() => {});
-      window.removeEventListener("click", startOnce);
-      window.removeEventListener("keydown", startOnce);
-      window.removeEventListener("touchstart", startOnce);
-    };
+      const startOnce = () => {
+        bg.play().catch(() => {});
+        window.removeEventListener("click", startOnce);
+        window.removeEventListener("keydown", startOnce);
+        window.removeEventListener("touchstart", startOnce);
+      };
+      window.addEventListener("click", startOnce);
+      window.addEventListener("keydown", startOnce);
+      window.addEventListener("touchstart", startOnce);
+    })();
 
-    window.addEventListener("click", startOnce);
-    window.addEventListener("keydown", startOnce);
-    window.addEventListener("touchstart", startOnce);
-  })();
-</script>
+    // ================== CHATBOT HELLO ==================
+    (function () {
+      const bubble = document.getElementById("snowmanBubble");
+      const img = document.querySelector("#snowman-chatbot .snowman-img");
+      if (!bubble) return;
 
-<!-- Snowman Chatbot -->
-<div id="snowman-chatbot">
-  <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
-  <img src="MainWeb/giphy.gif" alt="Snowman Chatbot" class="snowman-img">
-</div>
-
-<script>
-  (function () {
-    const bubble = document.getElementById("snowmanBubble");
-    const img = document.querySelector("#snowman-chatbot .snowman-img");
-    if (!bubble) return;
-
-    function showHello() {
-      bubble.textContent = "Xin chào";
-      bubble.style.opacity = "1";
-      bubble.style.transform = "translateY(0)";
-      setTimeout(() => {
-        bubble.style.opacity = "0";
-        bubble.style.transform = "translateY(10px)";
-      }, 2000);
-    }
-
-    // hiện 1 lần khi vào trang
-    showHello();
-    // lặp mỗi 5s
-    setInterval(showHello, 5000);
-
-    // (Tuỳ chọn) click snowman -> hiện 1 câu khác
-    if (img) {
-      img.addEventListener("click", () => {
-        bubble.textContent = "Bạn cần mình giúp gì nè? 🤖";
+      function showHello() {
+        bubble.textContent = "Xin chào";
         bubble.style.opacity = "1";
         bubble.style.transform = "translateY(0)";
         setTimeout(() => {
           bubble.style.opacity = "0";
           bubble.style.transform = "translateY(10px)";
-        }, 2500);
+        }, 2000);
+      }
+      showHello();
+      setInterval(showHello, 5000);
+
+      if (img) {
+        img.addEventListener("click", () => {
+          bubble.textContent = "Bạn cần mình giúp gì nè? 🤖";
+          bubble.style.opacity = "1";
+          bubble.style.transform = "translateY(0)";
+          setTimeout(() => {
+            bubble.style.opacity = "0";
+            bubble.style.transform = "translateY(10px)";
+          }, 2500);
+        });
+      }
+    })();
+
+    // ================== UI HELPERS ==================
+    const tabLogin = document.getElementById("tabLogin");
+    const tabRegister = document.getElementById("tabRegister");
+    const loginForm = document.getElementById("loginForm");
+    const registerForm = document.getElementById("registerForm");
+    const msgBox = document.getElementById("msg");
+    const bell = document.getElementById("bellSound");
+
+    function setTab(mode) {
+      const isLogin = mode === "login";
+      tabLogin.classList.toggle("active", isLogin);
+      tabRegister.classList.toggle("active", !isLogin);
+      loginForm.style.display = isLogin ? "block" : "none";
+      registerForm.style.display = isLogin ? "none" : "block";
+      hideMsg();
+    }
+    function showMsg(text, type) {
+      msgBox.textContent = text;
+      msgBox.className = "msg " + (type === "ok" ? "ok" : "err");
+      msgBox.style.display = "block";
+    }
+    function hideMsg() { msgBox.style.display = "none"; }
+
+    function loadUsers() {
+      try { return JSON.parse(localStorage.getItem(LS_USERS) || "{}"); }
+      catch { return {}; }
+    }
+    function saveUsers(users) { localStorage.setItem(LS_USERS, JSON.stringify(users)); }
+
+    tabLogin.addEventListener("click", () => setTab("login"));
+    tabRegister.addEventListener("click", () => setTab("register"));
+
+    // ================== SPA CORE ==================
+    function loadScriptOnce(src, attrName) {
+      return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[${attrName}="1"]`)) return resolve();
+        const s = document.createElement("script");
+        s.src = src;
+        s.async = false;
+        s.setAttribute(attrName, "1");
+        s.onload = resolve;
+        s.onerror = reject;
+        document.body.appendChild(s);
       });
     }
-  })();
-</script>
 
-<!-- Background Music -->
-<audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
-
-<script>
-  (function () {
-    const bg = document.getElementById("bgMusic");
-    if (!bg) return;
-
-    bg.volume = 0.35; // chỉnh nhỏ vừa nghe
-
-    // thử chạy ngay khi load (có thể bị chặn)
-    bg.play().catch(() => {});
-
-    // nếu bị chặn, chỉ cần 1 tương tác là chạy
-    const startOnce = () => {
-      bg.play().catch(() => {});
-      window.removeEventListener("click", startOnce);
-      window.removeEventListener("keydown", startOnce);
-      window.removeEventListener("touchstart", startOnce);
-    };
-
-    window.addEventListener("click", startOnce);
-    window.addEventListener("keydown", startOnce);
-    window.addEventListener("touchstart", startOnce);
-  })();
-</script>
-
-<!-- Snowman Chatbot -->
-<div id="snowman-chatbot">
-  <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
-  <img src="MainWeb/giphy.gif" alt="Snowman Chatbot" class="snowman-img">
-</div>
-
-<script>
-  (function () {
-    const bubble = document.getElementById("snowmanBubble");
-    const img = document.querySelector("#snowman-chatbot .snowman-img");
-    if (!bubble) return;
-
-    function showHello() {
-      bubble.textContent = "Xin chào";
-      bubble.style.opacity = "1";
-      bubble.style.transform = "translateY(0)";
-      setTimeout(() => {
-        bubble.style.opacity = "0";
-        bubble.style.transform = "translateY(10px)";
-      }, 2000);
-    }
-
-    // hiện 1 lần khi vào trang
-    showHello();
-    // lặp mỗi 5s
-    setInterval(showHello, 5000);
-
-    // (Tuỳ chọn) click snowman -> hiện 1 câu khác
-    if (img) {
-      img.addEventListener("click", () => {
-        bubble.textContent = "Bạn cần mình giúp gì nè? 🤖";
-        bubble.style.opacity = "1";
-        bubble.style.transform = "translateY(0)";
-        setTimeout(() => {
-          bubble.style.opacity = "0";
-          bubble.style.transform = "translateY(10px)";
-        }, 2500);
-      });
-    }
-  })();
-</script>
-
-<script>
-  async function spaLoadMain() {
-    const loginView = document.getElementById("view-login");
-    const mainView  = document.getElementById("view-main");
-
-    // 1) fetch HTML main
-    const res = await fetch("MainWeb/index.html", { cache: "no-store" });
-    const htmlText = await res.text();
-
-    // 2) parse lấy body
-    const doc = new DOMParser().parseFromString(htmlText, "text/html");
-    mainView.innerHTML = doc.body.innerHTML;
-
-    // 3) nạp CSS của main (style.css)
-    if (!document.querySelector('link[data-main-style="1"]')) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "MainWeb/style.css";
-      link.setAttribute("data-main-style", "1");
-      document.head.appendChild(link);
-    }
-
-    // 4) nạp SignalR (nếu chưa có)
-    if (!window.signalR) {
+    async function ensureSignalR() {
+      if (window.signalR) return;
       await new Promise((resolve, reject) => {
         const s = document.createElement("script");
         s.src = "https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js";
@@ -672,44 +443,124 @@
       });
     }
 
-    // 5) nạp ui.js + connection.js (MainWeb)
-    // (đảm bảo thứ tự: ui.js trước, connection.js sau)
-    await loadScriptOnce("MainWeb/ui.js", "data-ui-js");
-    await loadScriptOnce("MainWeb/connection.js", "data-conn-js");
+    // chạy lại các script nằm trong MainWeb/index.html (vì innerHTML không tự chạy script)
+    function runInlineScriptsFrom(doc) {
+      const scripts = Array.from(doc.querySelectorAll("script"));
+      scripts.forEach(sc => {
+        // nếu là external script thì bỏ (mình chủ động load ui.js/connection.js ở dưới)
+        if (sc.src) return;
+        const s2 = document.createElement("script");
+        s2.textContent = sc.textContent || "";
+        document.body.appendChild(s2);
+      });
+    }
 
-    // 6) gọi init bindings của main (cực quan trọng cho SPA)
-    if (window.initMainBindings) window.initMainBindings();
+    async function spaLoadMain() {
+      const loginView = document.getElementById("view-login");
+      const mainView  = document.getElementById("view-main");
 
-    // 7) show main, hide login
-    loginView.style.display = "none";
-    mainView.style.display = "block";
-  }
+      try {
+        const res = await fetch("MainWeb/index.html", { cache: "no-store" });
+        if (!res.ok) throw new Error("Không tải được MainWeb/index.html (HTTP " + res.status + ")");
 
-  function loadScriptOnce(src, markerAttr) {
-    return new Promise((resolve, reject) => {
-      if (document.querySelector(`script[${markerAttr}="1"]`)) return resolve();
-      const s = document.createElement("script");
-      s.src = src;
-      s.defer = true;
-      s.setAttribute(markerAttr, "1");
-      s.onload = resolve;
-      s.onerror = reject;
-      document.body.appendChild(s);
+        const htmlText = await res.text();
+        const doc = new DOMParser().parseFromString(htmlText, "text/html");
+
+        // Inject HTML main
+        mainView.innerHTML = doc.body.innerHTML;
+
+        // Load CSS main
+        if (!document.querySelector('link[data-main-style="1"]')) {
+          const link = document.createElement("link");
+          link.rel = "stylesheet";
+          link.href = "MainWeb/style.css";
+          link.setAttribute("data-main-style", "1");
+          document.head.appendChild(link);
+        }
+
+        // SignalR + main scripts
+        await ensureSignalR();
+        await loadScriptOnce("MainWeb/ui.js", "data-ui-js");
+        await loadScriptOnce("MainWeb/connection.js", "data-conn-js");
+
+        // Nếu main có inline script (hiếm) thì chạy lại
+        runInlineScriptsFrom(doc);
+
+        // Bind events (SPA)
+        if (window.initMainBindings) window.initMainBindings();
+
+        // Show main, hide login
+        loginView.style.display = "none";
+        mainView.style.display = "block";
+
+      } catch (err) {
+        console.error(err);
+        showMsg("Lỗi load main: " + (err?.message || err), "err");
+        // giữ nguyên login view để bạn thấy lỗi
+      }
+    }
+
+    // logout quay về login (để main gọi)
+    window.spaGoLogin = function () {
+      const loginView = document.getElementById("view-login");
+      const mainView  = document.getElementById("view-main");
+      mainView.style.display = "none";
+      loginView.style.display = "block";
+      document.body.classList.remove("door-opening");
+      localStorage.removeItem(LS_SESSION);
+      setTab("login");
+    };
+
+    function openDoorAndGo() {
+      try { bell.currentTime = 0; bell.play(); } catch (e) {}
+      document.body.classList.add("door-opening");
+      setTimeout(() => { spaLoadMain(); }, 900);
+    }
+
+    // ================== REGISTER ==================
+    document.getElementById("registerBtn").addEventListener("click", () => {
+      const u = document.getElementById("regUser").value.trim();
+      const p = document.getElementById("regPass").value.trim();
+      const k = document.getElementById("regKey").value.trim();
+
+      if (!u || !p || !k) return showMsg("Vui lòng nhập đủ Username, Password và System Key.", "err");
+      if (k !== PUBLISHER_SYSTEM_KEY) return showMsg("System Key không đúng. Bạn cần key từ nhà phát hành.", "err");
+
+      const users = loadUsers();
+      if (users[u]) return showMsg("Username đã tồn tại. Hãy chọn tên khác.", "err");
+
+      users[u] = p; // demo
+      saveUsers(users);
+
+      showMsg("Đăng ký thành công! Chuyển sang Đăng nhập…", "ok");
+      setTimeout(() => {
+        setTab("login");
+        document.getElementById("loginUser").value = u;
+        document.getElementById("loginPass").focus();
+      }, 800);
     });
-  }
 
-  function spaGoLogin() {
-  // xoá session login
-  localStorage.removeItem("lan_remote_logged_in");
+    // ================== LOGIN ==================
+    document.getElementById("loginBtn").addEventListener("click", () => {
+      const u = document.getElementById("loginUser").value.trim();
+      const p = document.getElementById("loginPass").value.trim();
 
-  // ẩn main
-  document.getElementById("view-main").style.display = "none";
+      if (!u || !p) return showMsg("Vui lòng nhập Username và Password.", "err");
 
-  // hiện login
-  document.getElementById("view-login").style.display = "block";
-}
+      const users = loadUsers();
+      if (!users[u] || users[u] !== p) return showMsg("Sai username hoặc password.", "err");
 
-</script>
+      localStorage.setItem(LS_SESSION, u);
+      showMsg("Đăng nhập thành công! Đang vào hệ thống…", "ok");
+      openDoorAndGo();
+    });
 
+    // Enter submit
+    document.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      if (loginForm.style.display !== "none") document.getElementById("loginBtn").click();
+      else document.getElementById("registerBtn").click();
+    });
+  </script>
 </body>
 </html>
