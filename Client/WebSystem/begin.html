@@ -194,6 +194,55 @@
             opacity: 0.9;
         }
 
+        /* Snowman Chatbot */
+        #snowman-container{
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .snowman-img{
+            width: 110px;
+            height: auto;
+            cursor: pointer;
+            user-select: none;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));
+        }
+
+        .chat-bubble{
+            position: relative;
+            background: rgba(255,255,255,0.92);
+            color: #111827;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+            border: 1px solid rgba(15,23,42,0.25);
+
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity .35s ease, transform .35s ease;
+            white-space: nowrap;
+        }
+
+        .chat-bubble::after{
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0 6px;
+            border-style: solid;
+            border-color: rgba(255,255,255,0.92) transparent transparent transparent;
+        }
+
+
     </style>
 </head>
 
@@ -222,6 +271,37 @@
             </a>
         </div>
     </div>
+    <div id="snowman-container">
+        
+        <!-- [MỚI] THÊM KHUNG CHAT VÀO ĐÂY (Mặc định ẩn) -->
+        <div id="chat-window">
+            <div class="chat-header">
+                <span>☃️ Snowman AI</span>
+                <!-- Nút tắt -->
+                <button onclick="toggleChat()" style="background:none;border:none;color:white;cursor:pointer;font-size:16px;">&times;</button>
+            </div>
+            <div id="chat-messages" class="chat-body">
+                <div class="msg-bot">Xin chào</div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chat-input" placeholder="Hỏi gì đó..." onkeypress="if(event.key==='Enter') sendChatUI()">
+                <button onclick="sendChatUI()">Gửi</button>
+            </div>
+        </div>
+
+        <!-- Avatar & Bong bóng (Giữ nguyên của bạn) -->
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+            <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
+            
+            <!-- [QUAN TRỌNG] THÊM onclick="toggleChat()" VÀO HÌNH CỦA BẠN -->
+            <img src="MainWeb/giphy.gif" alt="Snowman Chatbot" class="snowman-img" id="snowman-avatar" onclick="toggleChat()">
+        </div>
+    </div>
+
+    <!-- Background Music -->
+    <audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
+
+    <!-- SCRIPTS -->
 
     <!-- Tuyết rơi -->
    <script>
@@ -274,6 +354,58 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+<!-- Background Music -->
+<audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
 
+<script>
+  (function () {
+    const bg = document.getElementById("bgMusic");
+    if (!bg) return;
+
+    bg.volume = 0.35; // chỉnh nhỏ vừa nghe
+
+    // thử chạy ngay khi load (có thể bị chặn)
+    bg.play().catch(() => {});
+
+    // nếu bị chặn, chỉ cần 1 tương tác là chạy
+    const startOnce = () => {
+      bg.play().catch(() => {});
+      window.removeEventListener("click", startOnce);
+      window.removeEventListener("keydown", startOnce);
+      window.removeEventListener("touchstart", startOnce);
+    };
+
+    window.addEventListener("click", startOnce);
+    window.addEventListener("keydown", startOnce);
+    window.addEventListener("touchstart", startOnce);
+  })();
+</script>
+
+<script src="MainWeb/connection.js"></script>
+    <script src="MainWeb/ui.js"></script>
+
+    <!-- Script Bong bóng chào (Code cũ của bạn, đã chỉnh sửa nhẹ để tương thích chatbox) -->
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const bubble = document.getElementById("snowmanBubble");
+        if (bubble) {
+            function showHello() {
+                // [MỚI] Nếu đang mở chat thì không hiện bong bóng nữa
+                const chatWindow = document.getElementById('chat-window');
+                if (chatWindow && getComputedStyle(chatWindow).display !== 'none') return;
+
+                bubble.textContent = "Xin chào";
+                bubble.style.opacity = "1";
+                bubble.style.transform = "translateY(0)";
+                setTimeout(() => {
+                    bubble.style.opacity = "0";
+                    bubble.style.transform = "translateY(10px)";
+                }, 2000);
+            }
+            showHello();
+            setInterval(showHello, 5000);
+        }
+      });
+    </script>
 </body>
 </html>
