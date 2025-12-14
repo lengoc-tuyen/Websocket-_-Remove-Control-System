@@ -9,7 +9,7 @@ namespace Server.Services
     // Cung cấp dịch vụ quản lý phiên đăng nhập và xác thực kết nối
     public class AuthService
     {
-        private const string MASTER_SETUP_CODE = "lengoctuyen"; 
+        private const string MASTER_SETUP_CODE = "datdinhtuyen"; 
         
         // Key: ConnectionId của Client, Value: Username đã đăng nhập
         private readonly ConcurrentDictionary<string, string> _authenticatedConnections = 
