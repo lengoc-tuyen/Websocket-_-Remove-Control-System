@@ -12,7 +12,7 @@ function buildConnectionUrl(input) {
 
     const colonCount = (url.match(/:/g) || []).length;
     if (colonCount < 2) {
-        url += ":5000";
+        url += ":5001";
     }
 
     if (!url.endsWith("/controlHub")) {
@@ -51,10 +51,23 @@ async function connect() {
 
     connection.on("ReceiveStatus", (type, success, message) => {
         setStatus(`[${type}] ${message}`);
-        if (!success) alert(`Lỗi từ Server: ${message}`);
+        
+        if (success) {
+            if (type === "SETUP") {
+                handleServerStatus("SETUP_REGISTER");
+            } else if (type === "REGISTER" || type === "LOGIN") {
+                // Đăng nhập/Đăng ký xong -> Vào màn hình chính
+                showMainScreen(); 
+                if (window.ui && window.ui.addChatMessage) {
+                    ui.addChatMessage(message, 'bot');
+                }
+            }
+        } else {
+             alert(`Lỗi từ Server: ${message}`);
+        }
     });
 
-    connection.on("ReceiveImage", (type, base64Data) => {
+    connection.on("ReceiveImage", (type, base64Data)    => {
         const src = "data:image/jpeg;base64," + base64Data;
         if (type === "SCREENSHOT") {
             document.getElementById("screenPreview").src = src;
@@ -83,6 +96,10 @@ async function connect() {
         isConnected = true;
         updateConnectionUI(true);
         setStatus("Kết nối thành công!");
+        const status = await connection.invoke("GetServerStatus");
+        console.log("Server Status:", status);
+            handleServerStatus(status);
+
     } catch (err) {
         console.error(err);
         setStatus("Kết nối thất bại: " + err.toString());
@@ -93,8 +110,62 @@ async function connect() {
         isConnected = false;
         updateConnectionUI(false);
         setStatus("Mất kết nối với Server.");
+        if(document.getElementById("auth-screen")) {
+             document.getElementById("auth-screen").classList.remove('hidden');
+             document.getElementById("main-screen").classList.add('hidden');
+        }
     });
 }
+
+function handleServerStatus(status) {
+    hideAllAuthForms();
+
+    if (status === "SETUP_REQUIRED") {
+        if(document.getElementById('setup-form')) 
+            document.getElementById('setup-form').classList.remove('hidden');
+    } else if (status === "SETUP_REGISTER") {
+        if(document.getElementById('register-form')) 
+            document.getElementById('register-form').classList.remove('hidden');
+    } else if (status === "LOGIN_REQUIRED") {
+        if(document.getElementById('login-form')) 
+            document.getElementById('login-form').classList.remove('hidden');
+    } else if (status === "AUTHENTICATED") {
+        showMainScreen();
+    }
+}
+
+function hideAllAuthForms() {
+    const forms = ['setup-form', 'register-form', 'login-form'];
+    forms.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.classList.add('hidden');
+    });
+}
+
+function showMainScreen() {
+    const authScreen = document.getElementById('auth-screen');
+    const mainScreen = document.getElementById('main-screen');
+    if(authScreen) authScreen.classList.add('hidden');
+    if(mainScreen) mainScreen.classList.remove('hidden');
+}
+
+async function submitSetupCode() {
+    const code = document.getElementById('master-code').value;
+    if(code) await connection.invoke("SubmitSetupCode", code);
+}
+
+async function registerUser() {
+    const u = document.getElementById('reg-username').value;
+    const p = document.getElementById('reg-password').value;
+    if(u && p) await connection.invoke("RegisterUser", u, p);
+}
+
+async function loginUser() {
+    const u = document.getElementById('login-username').value;
+    const p = document.getElementById('login-password').value;
+    if(u && p) await connection.invoke("Login", u, p);
+}
+
 
 async function disconnect() {
     if (connection) await connection.stop();
@@ -112,6 +183,15 @@ function checkConn() {
 }
 
 function wireActionButtons() {
+    const btnSetup = document.getElementById("btn-submit-setup");
+    if(btnSetup) btnSetup.addEventListener("click", submitSetupCode);
+
+    const btnReg = document.getElementById("btn-submit-register");
+    if(btnReg) btnReg.addEventListener("click", registerUser);
+
+    const btnLogin = document.getElementById("btn-submit-login");
+    if(btnLogin) btnLogin.addEventListener("click", loginUser);
+
     document.getElementById("refreshAppsBtn").addEventListener("click", () => {
         if (checkConn()) {
             setStatus("Đang tải danh sách App...");

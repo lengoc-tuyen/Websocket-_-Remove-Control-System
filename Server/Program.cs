@@ -12,6 +12,9 @@ builder.Services.AddSignalR();
 builder.Services.AddSingleton<SystemService>();
 builder.Services.AddSingleton<WebcamService>();
 builder.Services.AddSingleton<InputService>();
+builder.Services.AddSingleton<UserRepository>(); // Để lưu file users.json
+builder.Services.AddSingleton<AuthService>();    // Để xử lý đăng nhập/mã chủ
+
 
 builder.Services.AddCors(options =>
 {
