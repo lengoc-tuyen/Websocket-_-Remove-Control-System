@@ -1,278 +1,440 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8" />
-    <title>Nhập IP – Christmas LAN Remote</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
+  <meta charset="UTF-8" />
+  <title>Đăng nhập – Christmas LAN Remote</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
 
-        body {
-            height: 100vh;
-            background: url("image/door-bg.jpg") center/cover no-repeat fixed;
-            font-family: system-ui, "Segoe UI", sans-serif;
-            position: relative;
-            overflow: hidden;
-        }
+    body {
+      height: 100vh;
+      background: url("image/door-bg.jpg") center/cover no-repeat fixed;
+      font-family: system-ui, "Segoe UI", sans-serif;
+      position: relative;
+      overflow: hidden;
+    }
 
-        /* Lớp phủ mờ cho nền */
-        body::before {
-            content:"";
-            position:fixed;
-            inset:0;
-            background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6));
-            pointer-events:none;
-            z-index:0;
-        }
+    body::before {
+      content:"";
+      position:fixed;
+      inset:0;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6));
+      pointer-events:none;
+      z-index:0;
+    }
 
-        /* Wreath-wrap đặt cố định đúng vị trí vòng hoa trên cửa */
-        .wreath-wrap {
-            position: fixed;
-            top: 26vh;          /* chỉnh cao/thấp vòng hoa ở đây */
-            left: 50%;
-            transform: translateX(-50%);
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            z-index: 2;
-        }
+    .wreath-wrap {
+      position: fixed;
+      top: 26vh;
+      left: 50%;
+      transform: translateX(-50%);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index: 2;
+    }
 
-        /* Vòng hoa */
-        .wreath {
-            width: 260px;
-            height: 260px;
-            background: url("image/wreath.png") center/contain no-repeat;
-            position: relative;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.7));
-            animation: leds 2.2s ease-in-out infinite, wreath-drop 0.8s ease-out;
-        }
+    .wreath {
+      width: 290px;
+      height: 290px;
+      background: url("image/wreath.png") center/contain no-repeat;
+      position: relative;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      filter: drop-shadow(0 10px 25px rgba(0,0,0,0.7));
+      animation: leds 2.2s ease-in-out infinite, wreath-drop 0.8s ease-out;
+    }
 
-        /* LED nhấp nháy */
-        @keyframes leds {
-            0%, 100% { filter: drop-shadow(0 8px 22px rgba(239,68,68,0.7)); }
-            50%      { filter: drop-shadow(0 8px 26px rgba(250,204,21,0.95)); }
-        }
+    @keyframes leds {
+      0%, 100% { filter: drop-shadow(0 8px 22px rgba(239,68,68,0.7)); }
+      50%      { filter: drop-shadow(0 8px 26px rgba(250,204,21,0.95)); }
+    }
 
-        /* Vòng hoa rơi xuống nhẹ lúc load */
-        @keyframes wreath-drop {
-            0%   { transform: scale(0.7) translateY(-40px); opacity:0; }
-            70%  { transform: scale(1.05) translateY(6px);  opacity:1; }
-            100% { transform: scale(1)    translateY(0);    opacity:1; }
-        }
+    @keyframes wreath-drop {
+      0%   { transform: scale(0.7) translateY(-40px); opacity:0; }
+      70%  { transform: scale(1.05) translateY(6px);  opacity:1; }
+      100% { transform: scale(1)    translateY(0);    opacity:1; }
+    }
 
-        /* Form bên trong vòng hoa */
-        .wreath-inner {
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            gap:10px;
-            transform: translateY(6px);
-        }
+    .wreath-inner {
+      width: 210px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:10px;
+      transform: translateY(6px);
+    }
 
-        #ipInput {
-            padding: 12px 10px;
-            width: 185px;
-            border-radius: 10px;
-            border: 2px solid #ffffff;
-            background: rgba(255,255,255,0.9);
-            text-align: center;
-            font-size: 16px;
-            font-weight: 600;
-            color: #111827;
-            outline: none;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-        }
+    .tabs {
+      display:flex;
+      gap:8px;
+      width:100%;
+      margin-bottom: 2px;
+    }
 
-        #ipInput::placeholder {
-            color: #6b7280;
-            font-weight: 500;
-        }
+    .tab-btn {
+      flex:1;
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.25);
+      color:#fff;
+      font-weight: 800;
+      cursor:pointer;
+      transition: transform .15s, background .15s;
+      text-shadow:0 1px 3px rgba(0,0,0,0.8);
+    }
 
-        #connectBtn {
-            width: 185px;
-            padding: 9px;
-            border-radius: 999px;
-            font-size: 14px;
-            font-weight: 700;
-            background: #f97316;
-            border:none;
-            color:#111827;
-            cursor:pointer;
-            box-shadow:0 4px 14px rgba(0,0,0,0.5);
-            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-        }
+    .tab-btn.active {
+      background: rgba(255,255,255,0.9);
+      color:#111827;
+      text-shadow:none;
+    }
 
-        #connectBtn:hover {
-            background:#fb923c;
-            transform:translateY(-2px);
-            box-shadow:0 6px 18px rgba(0,0,0,0.7);
-        }
+    .tab-btn:hover { transform: translateY(-1px); }
 
-        #hint {
-            margin-top: 6px;
-            font-size: 12px;
-            color:#e5e7eb;
-            text-shadow:0 1px 3px rgba(0,0,0,0.8);
-            text-align:center;
-        }
+    .field {
+      width:100%;
+      padding: 10px 10px;
+      border-radius: 10px;
+      border: 2px solid #ffffff;
+      background: rgba(255,255,255,0.92);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      outline: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    }
 
-        .bottom-links {
-            position: fixed;
-            bottom: 10px;
-            left: 0;
-            right: 0;
-            text-align: center;
-            z-index: 2;
-            font-size: 12px;
-            color:#e5e7eb;
-            text-shadow:0 1px 3px rgba(0,0,0,0.8);
-        }
+    .field::placeholder { color:#6b7280; font-weight:600; }
 
-        /* Tuyết rơi */
-        .snowflake {
-            position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 1;
-            animation: snow-spin 6s linear infinite;
-        }
+    .primary-btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 900;
+      background: #f97316;
+      border:none;
+      color:#111827;
+      cursor:pointer;
+      box-shadow:0 4px 14px rgba(0,0,0,0.5);
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    }
 
-        @keyframes snow-spin {
-            from { transform: rotate(0deg); }
-            to   { transform: rotate(360deg); }
-        }
+    .primary-btn:hover {
+      background:#fb923c;
+      transform:translateY(-2px);
+      box-shadow:0 6px 18px rgba(0,0,0,0.7);
+    }
 
-        /* Hiệu ứng mở cửa khi connect */
-        body.door-opening .wreath-wrap .wreath {
-            animation: wreath-zoom 0.9s ease-in forwards;
-        }
+    .hint {
+      margin-top: 2px;
+      font-size: 12px;
+      color:#e5e7eb;
+      text-shadow:0 1px 3px rgba(0,0,0,0.8);
+      text-align:center;
+      line-height: 1.35;
+    }
 
-        @keyframes wreath-zoom {
-            0%   { transform: scale(1) translateY(0);    opacity:1; }
-            40%  { transform: scale(1.15) translateY(-10px); }
-            100% { transform: scale(0.4) translateY(-120px); opacity:0; }
-        }
+    .msg {
+      width:100%;
+      font-size: 12px;
+      font-weight: 800;
+      text-align:center;
+      padding: 6px 8px;
+      border-radius: 10px;
+      display:none;
+    }
 
-        body.door-opening::before {
-            animation: fadeout-bg 0.9s ease-in forwards;
-        }
+    .msg.ok { background: rgba(34,197,94,0.2); color:#dcfce7; border:1px solid rgba(34,197,94,0.45); }
+    .msg.err { background: rgba(239,68,68,0.18); color:#fee2e2; border:1px solid rgba(239,68,68,0.45); }
 
-        @keyframes fadeout-bg {
-            0%   { background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6)); }
-            100% { background: rgba(15,23,42,1); }
-        }
+    .bottom-links {
+      position: fixed;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      z-index: 2;
+      font-size: 12px;
+      color:#e5e7eb;
+      text-shadow:0 1px 3px rgba(0,0,0,0.8);
+    }
 
-        /* Responsive: màn nhỏ hạ vòng hoa thấp hơn xíu & thu nhỏ */
-        @media (max-width: 768px) {
-            .wreath-wrap { top: 22vh; }
-            .wreath { width: 220px; height: 220px; }
-        }
-    </style>
+    .snowflake {
+      position: fixed;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 1;
+      animation: snow-spin 6s linear infinite;
+    }
+
+    @keyframes snow-spin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Door opening transition */
+    body.door-opening .wreath-wrap .wreath { animation: wreath-zoom 0.9s ease-in forwards; }
+
+    @keyframes wreath-zoom {
+      0%   { transform: scale(1) translateY(0);    opacity:1; }
+      40%  { transform: scale(1.15) translateY(-10px); }
+      100% { transform: scale(0.4) translateY(-120px); opacity:0; }
+    }
+
+    body.door-opening::before { animation: fadeout-bg 0.9s ease-in forwards; }
+
+    @keyframes fadeout-bg {
+      0%   { background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6)); }
+      100% { background: rgba(15,23,42,1); }
+    }
+
+    @media (max-width: 768px) {
+      .wreath-wrap { top: 22vh; }
+      .wreath { width: 250px; height: 250px; }
+      .wreath-inner { width: 200px; }
+    }
+  </style>
 </head>
 <body>
 
 <div class="wreath-wrap">
-    <div class="wreath">
-        <div class="wreath-inner">
-            <input type="text" id="ipInput" placeholder="192.168.1.10:3000" />
-            <button id="connectBtn">Kết nối 🎄</button>
-            <div id="hint">Nhập IP server / agent trong LAN</div>
-        </div>
+  <div class="wreath">
+    <div class="wreath-inner">
+
+      <!-- Tabs -->
+      <div class="tabs">
+        <button class="tab-btn active" id="tabLogin">Đăng nhập</button>
+        <button class="tab-btn" id="tabRegister">Đăng ký</button>
+      </div>
+
+      <!-- Message -->
+      <div id="msg" class="msg"></div>
+
+      <!-- LOGIN FORM -->
+      <div id="loginForm">
+        <input class="field" type="text" id="loginUser" placeholder="Username" autocomplete="username" />
+        <input class="field" type="password" id="loginPass" placeholder="Password" autocomplete="current-password" />
+        <button class="primary-btn" id="loginBtn">Đăng nhập 🎄</button>
+        <div class="hint">Đăng nhập xong mới được vào hệ thống.</div>
+      </div>
+
+      <!-- REGISTER FORM -->
+      <div id="registerForm" style="display:none;">
+        <input class="field" type="text" id="regUser" placeholder="Username" autocomplete="username" />
+        <input class="field" type="password" id="regPass" placeholder="Password" autocomplete="new-password" />
+        <input class="field" type="text" id="regKey" placeholder="System Key (bắt buộc)" />
+        <button class="primary-btn" id="registerBtn">Đăng ký ❄</button>
+        <div class="hint">Đăng ký xong sẽ tự chuyển về tab Đăng nhập.</div>
+      </div>
+
     </div>
+  </div>
 </div>
 
 <div class="bottom-links">
-    © Đồ án Mạng Máy Tính – Christmas LAN Remote ❄
+  © Đồ án Mạng Máy Tính – Christmas LAN Remote ❄
 </div>
 
 <audio id="bellSound" src="bell.mp3" preload="auto"></audio>
 
 <script>
-    // ❄ Tuyết rơi với snow.png
-    (function createSnow() {
-        const numFlakes = 30;
-        const flakes = [];
-        const w = window.innerWidth;
-        const h = window.innerHeight;
+  // ================== CONFIG ==================
+  // Mã system key từ "nhà phát hành". Demo: bạn đổi tại đây.
+  const PUBLISHER_SYSTEM_KEY = "DATDINHTUYEN";
 
-        for (let i = 0; i < numFlakes; i++) {
-            const img = document.createElement("img");
-            img.src = "image/snow.png";
-            img.className = "snowflake";
+  // LocalStorage keys
+  const LS_USERS = "lan_remote_users";          // { username: password }
+  const LS_SESSION = "lan_remote_logged_in";    // username
+  // BẮT BUỘC đăng nhập mỗi lần vào ip.html
+  localStorage.removeItem(LS_SESSION);
 
-            const size = Math.random() * 25 + 20; // 20–45px
-            img.style.width = size + "px";
 
-            img.style.top = Math.random() * h + "px";
-            img.style.left = Math.random() * w + "px";
-            img.style.opacity = (Math.random() * 0.7 + 0.3).toString();
+  // ================== SNOW ==================
+  (function createSnow() {
+    const numFlakes = 30;
+    const flakes = [];
+    const w = window.innerWidth;
+    const h = window.innerHeight;
 
-            document.body.appendChild(img);
-            flakes.push({
-                el: img,
-                speed: Math.random() * 1.5 + 0.5,
-                drift: Math.random() * 0.6 + 0.2
-            });
+    for (let i = 0; i < numFlakes; i++) {
+      const img = document.createElement("img");
+      img.src = "image/snow.png";
+      img.className = "snowflake";
+
+      const size = Math.random() * 25 + 20; // 20–45px
+      img.style.width = size + "px";
+
+      img.style.top = Math.random() * h + "px";
+      img.style.left = Math.random() * w + "px";
+      img.style.opacity = (Math.random() * 0.7 + 0.3).toString();
+
+      document.body.appendChild(img);
+      flakes.push({
+        el: img,
+        speed: Math.random() * 1.5 + 0.5,
+        drift: Math.random() * 0.6 + 0.2
+      });
+    }
+
+    function animate() {
+      const h = window.innerHeight;
+      const w = window.innerWidth;
+
+      flakes.forEach(flake => {
+        let top = parseFloat(flake.el.style.top);
+        let left = parseFloat(flake.el.style.left);
+
+        top += flake.speed;
+        left += Math.sin(top / 40) * flake.drift;
+
+        if (top > h) {
+          top = -50;
+          left = Math.random() * w;
         }
 
-        function animate() {
-            const h = window.innerHeight;
-            const w = window.innerWidth;
+        flake.el.style.top = top + "px";
+        flake.el.style.left = left + "px";
+      });
 
-            flakes.forEach(flake => {
-                let top = parseFloat(flake.el.style.top);
-                let left = parseFloat(flake.el.style.left);
+      requestAnimationFrame(animate);
+    }
 
-                top += flake.speed;
-                left += Math.sin(top / 40) * flake.drift;
+    animate();
+  })();
 
-                if (top > h) {
-                    top = -50;
-                    left = Math.random() * w;
-                }
+  // ================== UI HELPERS ==================
+  const tabLogin = document.getElementById("tabLogin");
+  const tabRegister = document.getElementById("tabRegister");
+  const loginForm = document.getElementById("loginForm");
+  const registerForm = document.getElementById("registerForm");
+  const msgBox = document.getElementById("msg");
 
-                flake.el.style.top = top + "px";
-                flake.el.style.left = left + "px";
-            });
+  const bell = document.getElementById("bellSound");
 
-            requestAnimationFrame(animate);
-        }
+  function setTab(mode) {
+    const isLogin = mode === "login";
+    tabLogin.classList.toggle("active", isLogin);
+    tabRegister.classList.toggle("active", !isLogin);
+    loginForm.style.display = isLogin ? "block" : "none";
+    registerForm.style.display = isLogin ? "none" : "block";
+    hideMsg();
+  }
 
-        animate();
-    })();
+  function showMsg(text, type) {
+    msgBox.textContent = text;
+    msgBox.className = "msg " + (type === "ok" ? "ok" : "err");
+    msgBox.style.display = "block";
+  }
 
-    // 🎄 Xử lý connect
-    const btn = document.getElementById("connectBtn");
-    const ipInput = document.getElementById("ipInput");
-    const bell = document.getElementById("bellSound");
+  function hideMsg() {
+    msgBox.style.display = "none";
+  }
 
-    btn.addEventListener("click", () => {
-        const ip = ipInput.value.trim();
-        if (!ip) {
-            alert("Hãy nhập địa chỉ IP trong mạng LAN!");
-            ipInput.focus();
-            return;
-        }
+  function loadUsers() {
+    try {
+      return JSON.parse(localStorage.getItem(LS_USERS) || "{}");
+    } catch {
+      return {};
+    }
+  }
 
-        localStorage.setItem("remote_ip_config", ip);
+  function saveUsers(users) {
+    localStorage.setItem(LS_USERS, JSON.stringify(users));
+  }
 
-        try { bell.currentTime = 0; bell.play(); } catch (e) {}
+  function openDoorAndGo() {
+    try { bell.currentTime = 0; bell.play(); } catch (e) {}
+    document.body.classList.add("door-opening");
+    setTimeout(() => {
+      // Trang bạn muốn tới sau khi đăng nhập
+      window.location.href = "MainWeb/index.html";
+    }, 900);
+  }
 
-        document.body.classList.add("door-opening");
+  // ================== TAB EVENTS ==================
+  tabLogin.addEventListener("click", () => setTab("login"));
+  tabRegister.addEventListener("click", () => setTab("register"));
 
-        setTimeout(() => {
-            window.location.href = "MainWeb/index.html";
-        }, 900);
-    });
+  // ================== REGISTER ==================
+  document.getElementById("registerBtn").addEventListener("click", () => {
+    const u = document.getElementById("regUser").value.trim();
+    const p = document.getElementById("regPass").value.trim();
+    const k = document.getElementById("regKey").value.trim();
 
-    ipInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") btn.click();
-    });
+    if (!u || !p || !k) {
+      showMsg("Vui lòng nhập đủ Username, Password và System Key.", "err");
+      return;
+    }
+    if (k !== PUBLISHER_SYSTEM_KEY) {
+      showMsg("System Key không đúng. Bạn cần key từ nhà phát hành.", "err");
+      return;
+    }
+
+    const users = loadUsers();
+    if (users[u]) {
+      showMsg("Username đã tồn tại. Hãy chọn tên khác.", "err");
+      return;
+    }
+
+    users[u] = p; // demo: lưu plain text. Backend thật thì hash nhé.
+    saveUsers(users);
+
+    showMsg("Đăng ký thành công! Chuyển sang Đăng nhập…", "ok");
+    setTimeout(() => {
+      setTab("login");
+      document.getElementById("loginUser").value = u;
+      document.getElementById("loginPass").focus();
+    }, 800);
+  });
+
+  // ================== LOGIN ==================
+  document.getElementById("loginBtn").addEventListener("click", () => {
+    const u = document.getElementById("loginUser").value.trim();
+    const p = document.getElementById("loginPass").value.trim();
+
+    if (!u || !p) {
+      showMsg("Vui lòng nhập Username và Password.", "err");
+      return;
+    }
+
+    const users = loadUsers();
+    if (!users[u] || users[u] !== p) {
+      showMsg("Sai username hoặc password.", "err");
+      return;
+    }
+
+    localStorage.setItem(LS_SESSION, u);
+    showMsg("Đăng nhập thành công! Đang vào hệ thống…", "ok");
+    openDoorAndGo();
+  });
+
+  // Enter to submit
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    if (loginForm.style.display !== "none") {
+      document.getElementById("loginBtn").click();
+    } else {
+      document.getElementById("registerBtn").click();
+    }
+  });
+
+  // Nếu đã login trước đó thì cho vào thẳng (tuỳ bạn muốn hay không)
+//   (function autoGoIfLoggedIn(){
+//     const u = localStorage.getItem(LS_SESSION);
+//     if (u) {
+//       // comment 2 dòng dưới nếu bạn muốn lần nào cũng bắt login
+//       showMsg("Chào " + u + "! Đang vào hệ thống…", "ok");
+//       openDoorAndGo();
+//     }
+//   })();
 </script>
 
 </body>
