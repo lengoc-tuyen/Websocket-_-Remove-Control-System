@@ -185,5 +185,30 @@
     <img src="giphy.gif" alt="Snowman Chatbot" class="snowman-img">
 </div>
 
+<audio id="bgMusic" src="../music.mp3" loop preload="auto"></audio>
+<script>
+  (function () {
+    const bg = document.getElementById("bgMusic");
+    if (!bg) return;
+
+    bg.volume = 0.35; // chỉnh nhỏ vừa nghe
+
+    // thử chạy ngay khi load (có thể bị chặn)
+    bg.play().catch(() => {});
+
+    // nếu bị chặn, chỉ cần 1 tương tác là chạy
+    const startOnce = () => {
+      bg.play().catch(() => {});
+      window.removeEventListener("click", startOnce);
+      window.removeEventListener("keydown", startOnce);
+      window.removeEventListener("touchstart", startOnce);
+    };
+
+    window.addEventListener("click", startOnce);
+    window.addEventListener("keydown", startOnce);
+    window.addEventListener("touchstart", startOnce);
+  })();
+</script>
+
 </body>
 </html>

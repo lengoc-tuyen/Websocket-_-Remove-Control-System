@@ -201,6 +201,54 @@
       .wreath { width: 250px; height: 250px; }
       .wreath-inner { width: 200px; }
     }
+
+    /* Snowman Chatbot */
+        #snowman-chatbot{
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .snowman-img{
+            width: 110px;
+            height: auto;
+            cursor: pointer;
+            user-select: none;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));
+        }
+
+        .chat-bubble{
+            position: relative;
+            background: rgba(255,255,255,0.92);
+            color: #111827;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+            border: 1px solid rgba(15,23,42,0.25);
+
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity .35s ease, transform .35s ease;
+            white-space: nowrap;
+        }
+
+        .chat-bubble::after{
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0 6px;
+            border-style: solid;
+            border-color: rgba(255,255,255,0.92) transparent transparent transparent;
+        }
   </style>
 </head>
 <body>
@@ -425,16 +473,75 @@
       document.getElementById("registerBtn").click();
     }
   });
+</script>
 
-  // Nếu đã login trước đó thì cho vào thẳng (tuỳ bạn muốn hay không)
-//   (function autoGoIfLoggedIn(){
-//     const u = localStorage.getItem(LS_SESSION);
-//     if (u) {
-//       // comment 2 dòng dưới nếu bạn muốn lần nào cũng bắt login
-//       showMsg("Chào " + u + "! Đang vào hệ thống…", "ok");
-//       openDoorAndGo();
-//     }
-//   })();
+<!-- Background Music -->
+<audio id="bgMusic" src="music.mp3" loop preload="auto"></audio>
+
+<script>
+  (function () {
+    const bg = document.getElementById("bgMusic");
+    if (!bg) return;
+
+    bg.volume = 0.35; // chỉnh nhỏ vừa nghe
+
+    // thử chạy ngay khi load (có thể bị chặn)
+    bg.play().catch(() => {});
+
+    // nếu bị chặn, chỉ cần 1 tương tác là chạy
+    const startOnce = () => {
+      bg.play().catch(() => {});
+      window.removeEventListener("click", startOnce);
+      window.removeEventListener("keydown", startOnce);
+      window.removeEventListener("touchstart", startOnce);
+    };
+
+    window.addEventListener("click", startOnce);
+    window.addEventListener("keydown", startOnce);
+    window.addEventListener("touchstart", startOnce);
+  })();
+</script>
+
+<!-- Snowman Chatbot -->
+<div id="snowman-chatbot">
+  <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
+  <img src="MainWeb/giphy.gif" alt="Snowman Chatbot" class="snowman-img">
+</div>
+
+<script>
+  (function () {
+    const bubble = document.getElementById("snowmanBubble");
+    const img = document.querySelector("#snowman-chatbot .snowman-img");
+    if (!bubble) return;
+
+    function showHello() {
+      bubble.textContent = "Xin chào";
+      bubble.style.opacity = "1";
+      bubble.style.transform = "translateY(0)";
+      setTimeout(() => {
+        bubble.style.opacity = "0";
+        bubble.style.transform = "translateY(10px)";
+      }, 2000);
+    }
+
+    // hiện 1 lần khi vào trang
+    showHello();
+    // lặp mỗi 5s
+    setInterval(showHello, 5000);
+
+    // (Tuỳ chọn) click snowman -> hiện 1 câu khác
+    if (img) {
+      img.addEventListener("click", () => {
+        bubble.textContent = "Bạn cần mình giúp gì nè? 🤖";
+        bubble.style.opacity = "1";
+        bubble.style.transform = "translateY(0)";
+        setTimeout(() => {
+          bubble.style.opacity = "0";
+          bubble.style.transform = "translateY(10px)";
+        }, 2500);
+      });
+    }
+  })();
 </script>
 
 </body>
