@@ -80,21 +80,79 @@ function initTabs() {
 
 initTabs();
 
-// Snowman chatbot greeting "Xin chào" every 5s
-const snowmanBubble = document.getElementById("snowmanBubble");
+// ===== Snowman Hover + Click behaviour =====
+document.addEventListener("DOMContentLoaded", () => {
+    const snowmanBubble = document.getElementById("snowmanBubble");
+    const snowmanImg = document.querySelector("#snowman-chatbot .snowman-img");
+    if (!snowmanBubble || !snowmanImg) return;
 
-if (snowmanBubble) {
-    function showGreeting() {
-        snowmanBubble.textContent = "Xin chào";
+    const showBubble = (text) => {
+        snowmanBubble.textContent = text;
         snowmanBubble.style.opacity = "1";
         snowmanBubble.style.transform = "translateY(0)";
+    };
 
+    const hideBubble = () => {
+        snowmanBubble.style.opacity = "0";
+        snowmanBubble.style.transform = "translateY(10px)";
+    };
+
+    // Hover -> hiện câu
+    snowmanImg.addEventListener("mouseenter", () => {
+        showBubble("Bạn cần giúp gì không?");
+    });
+
+    snowmanImg.addEventListener("mouseleave", () => {
+        hideBubble();
+    });
+
+    // Click -> mở chat (không phụ thuộc hover)
+    snowmanImg.addEventListener("click", () => {
+        toggleChat();
+    });
+});
+
+
+// ===== Snowman Chat Window Logic =====
+function toggleChat() {
+    const chat = document.getElementById("chat-window");
+    if (!chat) return;
+
+    const isOpen = chat.classList.contains("open");
+    if (isOpen) {
+        chat.classList.remove("open");
         setTimeout(() => {
-            snowmanBubble.style.opacity = "0";
-            snowmanBubble.style.transform = "translateY(10px)";
-        }, 2000);
+            if (!chat.classList.contains("open"))
+                chat.style.display = "none";
+        }, 180);
+    } else {
+        chat.style.display = "flex";
+        requestAnimationFrame(() => chat.classList.add("open"));
     }
+}
 
-    showGreeting();
-    setInterval(showGreeting, 5000);
+function sendChatUI() {
+    const input = document.getElementById("chat-input");
+    const box = document.getElementById("chat-messages");
+    if (!input || !box) return;
+
+    const text = input.value.trim();
+    if (!text) return;
+
+    const userMsg = document.createElement("div");
+    userMsg.className = "msg-user";
+    userMsg.textContent = text;
+    box.appendChild(userMsg);
+
+    input.value = "";
+
+    const botMsg = document.createElement("div");
+    botMsg.className = "msg-bot";
+    botMsg.textContent = "Mình nhận được rồi nè ☃️";
+    setTimeout(() => {
+        box.appendChild(botMsg);
+        box.scrollTop = box.scrollHeight;
+    }, 300);
+
+    box.scrollTop = box.scrollHeight;
 }

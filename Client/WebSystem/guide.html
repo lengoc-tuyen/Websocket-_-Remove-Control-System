@@ -74,6 +74,208 @@
             transform: translateY(-1px);
             box-shadow: 0 6px 16px rgba(0,0,0,0.5);
         }
+
+        /* Snowman Chatbot */
+        #snowman-chatbot{
+            position: fixed;
+            right: 16px;
+            bottom: 16px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .snowman-img{
+            width: 110px;
+            height: auto;
+            cursor: pointer;
+            user-select: none;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));
+        }
+
+        .chat-bubble{
+            position: relative;
+            background: rgba(255,255,255,0.92);
+            color: #111827;
+            padding: 6px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.4);
+            border: 1px solid rgba(15,23,42,0.25);
+
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity .35s ease, transform .35s ease;
+            white-space: nowrap;
+        }
+
+        .chat-bubble::after{
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 6px 6px 0 6px;
+            border-style: solid;
+            border-color: rgba(255,255,255,0.92) transparent transparent transparent;
+        }
+        
+        /* ===== Snowman Chat Window (NEW) ===== */
+#chat-window{
+  width: 320px;
+  max-width: calc(100vw - 40px);
+  height: 380px;
+  max-height: calc(100vh - 180px);
+  display: none; /* mặc định ẩn */
+  flex-direction: column;
+  overflow: hidden;
+
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(12, 18, 36, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+
+  box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+  transform: translateY(8px) scale(0.98);
+  opacity: 0;
+  transition: opacity .22s ease, transform .22s ease;
+}
+
+#chat-window.open{
+  display: flex;
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.chat-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 10px 12px;
+
+  color: #fff;
+  font-size: 16px;
+  letter-spacing: .5px;
+
+  background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.06));
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+}
+
+.chat-header span{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+}
+
+.chat-header button{
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #fff;
+  cursor: pointer;
+  transition: transform .15s ease, background .15s ease;
+}
+
+.chat-header button:hover{
+  transform: scale(1.05);
+  background: rgba(255,255,255,0.18);
+}
+
+.chat-body{
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+
+  /* scrollbar gọn */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.25) transparent;
+}
+.chat-body::-webkit-scrollbar{ width: 8px; }
+.chat-body::-webkit-scrollbar-thumb{
+  background: rgba(255,255,255,0.2);
+  border-radius: 999px;
+}
+
+.msg-bot, .msg-user{
+  max-width: 82%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.35;
+  word-wrap: break-word;
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+}
+
+.msg-bot{
+  align-self: flex-start;
+  color: #0b1220;
+  background: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.35);
+}
+
+.msg-user{
+  align-self: flex-end;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(210,47,47,0.95), rgba(255,213,79,0.35));
+  border: 1px solid rgba(255,255,255,0.18);
+}
+
+.chat-input-area{
+  padding: 10px;
+  display:flex;
+  gap: 8px;
+  background: rgba(255,255,255,0.06);
+  border-top: 1px solid rgba(255,255,255,0.12);
+}
+
+.chat-input-area input{
+  flex:1;
+  height: 38px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(0,0,0,0.20);
+  color: #fff;
+  padding: 0 12px;
+  outline: none;
+  font-size: 13px;
+}
+
+.chat-input-area input::placeholder{
+  color: rgba(255,255,255,0.65);
+}
+
+.chat-input-area button{
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,213,79,0.85);
+  color: #0b1220;
+  cursor: pointer;
+  font-weight: 800;
+  transition: transform .15s ease, filter .15s ease;
+}
+
+.chat-input-area button:hover{
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+}
+
+/* Khi mở chat thì ẩn bubble chào */
+#chat-window.open ~ div #snowmanBubble{
+  opacity: 0 !important;
+  transform: translateY(10px) !important;
+}
+
     </style>
 </head>
 <body>
@@ -163,5 +365,117 @@ document.addEventListener("DOMContentLoaded", () => {
     animateSnowflakes();
 });
 </script>
+
+<!-- Snowman Chatbot -->
+<div id="snowman-chatbot">
+  <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
+  <img src="MainWeb/giphy.gif" alt="Snowman Chatbot" class="snowman-img" onclick="toggleChat()">
+</div>
+
+<div id="chat-window">
+  <div class="chat-header">
+    <span>☃️ Snowman AI</span>
+    <button onclick="toggleChat()">✕</button>
+  </div>
+
+  <div class="chat-body" id="chat-messages">
+    <div class="msg-bot">Mình có thể giúp gì cho bạn?</div>
+  </div>
+
+  <div class="chat-input-area">
+    <input id="chat-input" type="text" placeholder="Hỏi gì đó..."
+           onkeydown="if(event.key==='Enter') sendChatUI()" />
+    <button onclick="sendChatUI()">Gửi</button>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const bubble = document.getElementById("snowmanBubble");
+    const img = document.querySelector("#snowman-chatbot .snowman-img");
+    if (!bubble) return;
+
+    function showHello() {
+      bubble.textContent = "Xin chào";
+      bubble.style.opacity = "1";
+      bubble.style.transform = "translateY(0)";
+      setTimeout(() => {
+        bubble.style.opacity = "0";
+        bubble.style.transform = "translateY(10px)";
+      }, 2000);
+    }
+
+    // hiện 1 lần khi vào trang
+    showHello();
+    // lặp mỗi 5s
+    setInterval(showHello, 5000);
+
+    // (Tuỳ chọn) click snowman -> hiện 1 câu khác
+    if (img) {
+      img.addEventListener("click", () => {
+        bubble.textContent = "Bạn cần mình giúp gì nè? 🤖";
+        bubble.style.opacity = "1";
+        bubble.style.transform = "translateY(0)";
+        setTimeout(() => {
+          bubble.style.opacity = "0";
+          bubble.style.transform = "translateY(10px)";
+        }, 2500);
+      });
+    }
+  })();
+</script>
+
+<script>
+  function toggleChat() {
+    const chat = document.getElementById("chat-window");
+    if (!chat) return;
+
+    const isOpen = chat.classList.contains("open");
+    if (isOpen) {
+      chat.classList.remove("open");
+      // display:none sau khi animation xong
+      setTimeout(() => { if (!chat.classList.contains("open")) chat.style.display = "none"; }, 180);
+    } else {
+      chat.style.display = "flex";
+      requestAnimationFrame(() => chat.classList.add("open"));
+      // focus input
+      const input = document.getElementById("chat-input");
+      if (input) setTimeout(() => input.focus(), 100);
+    }
+  }
+
+  function sendChatUI() {
+    const input = document.getElementById("chat-input");
+    const box = document.getElementById("chat-messages");
+    if (!input || !box) return;
+
+    const text = (input.value || "").trim();
+    if (!text) return;
+
+    // add user bubble
+    const userMsg = document.createElement("div");
+    userMsg.className = "msg-user";
+    userMsg.textContent = text;
+    box.appendChild(userMsg);
+
+    input.value = "";
+
+    // TODO: chỗ này bạn gắn WebSocket gửi đi (nếu có)
+    // sendToServer(text);
+
+    // demo bot reply (để nhìn UI đẹp)
+    const botMsg = document.createElement("div");
+    botMsg.className = "msg-bot";
+    botMsg.textContent = "Mình nhận được rồi nè ☃️";
+    setTimeout(() => {
+      box.appendChild(botMsg);
+      box.scrollTop = box.scrollHeight;
+    }, 250);
+
+    box.scrollTop = box.scrollHeight;
+  }
+</script>
+
+
 </body>
 </html>

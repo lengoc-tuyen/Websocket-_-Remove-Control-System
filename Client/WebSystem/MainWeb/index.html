@@ -176,14 +176,38 @@
     <span id="lastUpdated" style="color: #9ca3af;"></span>
 </div>
 
-<script src="ui.js"></script>
-<script src="connection.js"></script>
+
 
 <!-- Snowman Chatbot -->
 <div id="snowman-chatbot">
     <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
     <img src="giphy.gif" alt="Snowman Chatbot" class="snowman-img">
 </div>
+
+<!-- Chat Window -->
+<div id="chat-window">
+  <div class="chat-header">
+    <span>☃️ Snowman AI</span>
+    <button onclick="toggleChat()">✕</button>
+  </div>
+
+  <div class="chat-body" id="chat-messages">
+    <div class="msg-bot">Mình có thể giúp gì cho bạn?</div>
+  </div>
+
+  <div class="chat-input-area">
+    <input
+      id="chat-input"
+      type="text"
+      placeholder="Hỏi gì đó..."
+      onkeydown="if(event.key==='Enter') sendChatUI()"
+    />
+    <button onclick="sendChatUI()">Gửi</button>
+  </div>
+</div>
+
+<script src="ui.js"></script>
+<script src="connection.js"></script>
 
 </body>
 </html>
