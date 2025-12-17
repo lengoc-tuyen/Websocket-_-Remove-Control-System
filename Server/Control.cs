@@ -1,14 +1,15 @@
 using Microsoft.AspNetCore.SignalR;
 using Server.Services;
+using Server.Shared;
 using Server.helper;
+using System;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.Threading;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using System;
 
 
 namespace Server.Hubs
@@ -19,7 +20,7 @@ namespace Server.Hubs
         private readonly WebcamService _webcamService;
         private readonly InputService _inputService;
         private readonly IHubContext<ControlHub> _hubContext;
-        private readonly IConfiguration _configuration;
+        // [THÊM] Dịch vụ xác thực
         private readonly AuthService _authService; 
 
         public ControlHub(
@@ -27,101 +28,132 @@ namespace Server.Hubs
             WebcamService webcamService, 
             InputService inputService,
             IHubContext<ControlHub> hubContext,
-            IConfiguration configuration,
-            AuthService authService)
+            AuthService authService // [THÊM] Inject AuthService
+        )
         {
             _systemService = systemService;
             _webcamService = webcamService;
             _inputService = inputService;
             _hubContext = hubContext;
-            _configuration = configuration;
-            _authService = authService;
-
-        }
-
-        // Hàm bảo vệ (Guard): Kiểm tra xem user có quyền không
-        private async Task<bool> IsAuthenticated()
-        {
-            if (_authService.IsAuthenticated(Context.ConnectionId)) return true;
-            await Clients.Caller.SendAsync("ReceiveStatus", "AUTH_FAIL", false, "Vui lòng đăng nhập để thực hiện lệnh.");
-            return false;
+            _authService = authService; // [THÊM] Gán AuthService
         }
         
-        // Client gọi hàm này đầu tiên để biết nên hiện form nào (Setup, Register hay Login)
-        public string GetServerStatus()
+        // --- XỬ LÝ KẾT NỐI VÀ NGẮT KẾT NỐI ---
+        public override async Task OnConnectedAsync()
         {
-            if (_authService.IsAuthenticated(Context.ConnectionId)) return "AUTHENTICATED";
-            if (!_authService.IsAnyUserRegistered())
-            {
-                if (_authService.IsRegistrationAllowed(Context.ConnectionId)) return "SETUP_REGISTER";
-                return "SETUP_REQUIRED"; 
-            }
-            return "LOGIN_REQUIRED"; 
+            // [SỬA] Gửi status chung, sau đó check trạng thái Auth
+            await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, true, "Kết nối SignalR thành công.");
+            await GetServerStatus(); 
+            await base.OnConnectedAsync();
         }
 
-        // Bước 1: Nộp mã khóa chủ (Master Code)
+        public override async Task OnDisconnectedAsync(Exception? exception)
+        {
+            // [THÊM] Xóa phiên khi người dùng ngắt kết nối
+            _authService.Logout(Context.ConnectionId);
+            await base.OnDisconnectedAsync(exception);
+        }
+
+        // --- LOGIC AUTHENTICATION (3 BƯỚC: Setup Code -> Register -> Login) ---
+        
+        /// <summary>
+        /// Xác định trạng thái hiện tại của Server để Client hiển thị UI thích hợp.
+        /// </summary>
+        public async Task GetServerStatus()
+        {
+            string status;
+            string message;
+            
+            if (_authService.IsAuthenticated(Context.ConnectionId))
+            {
+                status = ConnectionStatus.Authenticated;
+                message = "Đã xác thực. Sẵn sàng điều khiển.";
+            }
+            else if (_authService.IsRegistrationAllowed(Context.ConnectionId))
+            {
+                 // Nếu đã nhập Master Code nhưng chưa hoàn tất đăng ký
+                status = ConnectionStatus.RegistrationRequired;
+                message = "Đã xác nhận Master Code. Vui lòng hoàn tất đăng ký tài khoản.";
+            }
+            else 
+            {
+                // Mặc định yêu cầu Login (User phải tự nhập Master Code nếu muốn đăng ký)
+                status = ConnectionStatus.LoginRequired; 
+                message = "Vui lòng đăng nhập hoặc nhập Master Code để đăng ký.";
+            }
+
+            // Gửi trạng thái chi tiết về Client
+            await Clients.Caller.SendAsync("ReceiveStatus", "SERVER_STATUS", true, message);
+            // Client sẽ dùng code này để chuyển đổi giữa Setup/Register/Login Form
+            await Clients.Caller.SendAsync("ReceiveServerStatus", status); 
+        }
+
+        /// <summary>
+        /// Xử lý Master Setup Code
+        /// </summary>
         public async Task SubmitSetupCode(string code)
         {
-            if (_authService.IsAnyUserRegistered())
-            {
-                await Clients.Caller.SendAsync("ReceiveStatus", "SETUP", false, "Server đã cài đặt rồi.");
-                return;
-            }
             if (_authService.ValidateSetupCode(Context.ConnectionId, code))
             {
-                await Clients.Caller.SendAsync("ReceiveStatus", "SETUP", true, "Mã đúng! Hãy tạo tài khoản Admin.");
+                // Nếu code đúng, chuyển sang trạng thái chờ đăng ký
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, true, "Mã thiết lập đúng. Vui lòng đăng ký tài khoản mới.");
+                await Clients.Caller.SendAsync("ReceiveServerStatus", ConnectionStatus.RegistrationRequired);
             }
             else
             {
-                await Clients.Caller.SendAsync("ReceiveStatus", "SETUP", false, "Mã Khóa Chủ sai.");
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, false, ErrorMessages.SetupCodeInvalid);
+                await Clients.Caller.SendAsync("ReceiveServerStatus", ConnectionStatus.LoginRequired); // Về trạng thái Login
             }
         }
 
-        // Bước 2: Đăng ký tài khoản Admin đầu tiên
+        /// <summary>
+        /// Xử lý Đăng ký tài khoản mới (Chỉ được gọi sau khi SubmitSetupCode thành công)
+        /// </summary>
         public async Task RegisterUser(string username, string password)
         {
             if (!_authService.IsRegistrationAllowed(Context.ConnectionId))
             {
-                await Clients.Caller.SendAsync("ReceiveStatus", "REGISTER", false, "Chưa nhập Mã Khóa Chủ.");
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, false, ErrorMessages.RegistrationNotAllowed);
                 return;
             }
-            if (_authService.IsUsernameTaken(username))
-            {
-                await Clients.Caller.SendAsync("ReceiveStatus", "REGISTER", false, "Tên tài khoản đã tồn tại.");
-                return;
-            }
+            
             if (await _authService.TryRegisterAsync(Context.ConnectionId, username, password))
             {
-                _authService.TryAuthenticate(Context.ConnectionId, username, password); // Tự động login sau khi đăng ký
-                await Clients.Caller.SendAsync("ReceiveStatus", "REGISTER", true, $"Tạo tài khoản {username} thành công!");
+                // Đăng ký thành công, tự động đăng nhập và chuyển sang Dashboard
+                _authService.TryAuthenticate(Context.ConnectionId, username, password); 
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, true, $"Đăng ký thành công tài khoản: {username}.");
+                await Clients.Caller.SendAsync("ReceiveServerStatus", ConnectionStatus.Authenticated);
             }
             else
             {
-                await Clients.Caller.SendAsync("ReceiveStatus", "REGISTER", false, "Lỗi lưu tài khoản.");
+                 // Lỗi có thể do tên người dùng đã tồn tại
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, false, ErrorMessages.UsernameTaken);
             }
         }
 
-        // Bước 3: Đăng nhập
-        public async Task<bool> Login(string username, string password)
+        /// <summary>
+        /// Xử lý Đăng nhập
+        /// </summary>
+        public async Task Login(string username, string password)
         {
-            bool success = _authService.TryAuthenticate(Context.ConnectionId, username, password);
-            if (success) await Clients.Caller.SendAsync("ReceiveStatus", "LOGIN", true, $"Chào mừng trở lại, {username}!");
-            else await Clients.Caller.SendAsync("ReceiveStatus", "LOGIN", false, "Sai thông tin đăng nhập.");
-            return success;
+            if (_authService.TryAuthenticate(Context.ConnectionId, username, password))
+            {
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, true, $"Đăng nhập thành công, chào mừng {username}.");
+                await Clients.Caller.SendAsync("ReceiveServerStatus", ConnectionStatus.Authenticated);
+            }
+            else
+            {
+                await Clients.Caller.SendAsync("ReceiveStatus", StatusType.Auth, false, ErrorMessages.InvalidCredentials);
+            }
         }
 
-        // Tự động đăng xuất khi mất kết nối
-        public override Task OnDisconnectedAsync(Exception exception)
-        {
-            _authService.Logout(Context.ConnectionId);
-            return base.OnDisconnectedAsync(exception);
-        }
 
         // --- NHÓM 1: HỆ THỐNG (LIST, START, KILL, SHUTDOWN) ---
 
         public async Task GetProcessList(bool isAppOnly)
         {
-            //if (!await IsAuthenticated()) return;
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             var list = _systemService.ListProcessOrApp(isAppOnly);
             // Gửi kết quả về cho người gọi (Caller)
             string json = JsonHelper.ToJson(list);
@@ -130,21 +162,24 @@ namespace Server.Hubs
 
         public async Task StartProcess(string path)
         {
-            //if (!await IsAuthenticated()) return;
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             bool result = _systemService.startProcessOrApp(path);
             await Clients.Caller.SendAsync("ReceiveStatus", "START", result, result ? "Đã gửi lệnh mở" : "Lỗi mở file");
         }
 
         public async Task KillProcess(int id)
         {
-            //if (!await IsAuthenticated()) return;   
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             bool result = _systemService.killProcessOrApp(id);
             await Clients.Caller.SendAsync("ReceiveStatus", "KILL", result, result ? "Đã diệt thành công" : "Không thể diệt");
         }
 
         public async Task ShutdownServer(bool isRestart)
         {
-           // if (!await IsAuthenticated()) return;
+           if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+           
             bool result = _systemService.shutdownOrRestart(isRestart);
             await Clients.Caller.SendAsync("ReceiveStatus", "POWER", result, "Đang thực hiện lệnh nguồn...");
         }
@@ -153,15 +188,19 @@ namespace Server.Hubs
 
         public async Task GetScreenshot()
         {
-            //if (!await IsAuthenticated()) return;
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             byte[] image = _webcamService.captureScreen();
             // Gửi ảnh về Client
             await Clients.Caller.SendAsync("ReceiveImage", "SCREENSHOT", image);
         }
 
-        // Lệnh: Mở Webcam -> Quay 3s -> Gửi về -> Giữ cam mở
+        // [GIỮ NGUYÊN LOGIC CŨ CỦA BẠN] Lệnh: Mở Webcam -> Quay 10s -> Gửi về -> Giữ cam mở
+        // [CẢNH BÁO: LOGIC NÀY KHÔNG PHẢI LIVE STREAM]
         public async Task RequestWebcam()
         {
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             await Clients.Caller.SendAsync("ReceiveStatus", "WEBCAM", true, "Đang quay video 10 giây...");
 
             var token = Context.ConnectionAborted;
@@ -196,7 +235,7 @@ namespace Server.Hubs
         }
         public async Task CloseWebcam()
         {
-            //if (!await IsAuthenticated()) return;
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
             _webcamService.closeWebcam();
             await Clients.Caller.SendAsync("ReceiveStatus", "WEBCAM", true, "Đã đóng Webcam.");
         }
@@ -205,6 +244,8 @@ namespace Server.Hubs
 
         public async Task StartKeyLogger()
         {
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             string connectionId = Context.ConnectionId;
             
             _inputService.StartKeyLogger((keyData) => 
@@ -230,7 +271,8 @@ namespace Server.Hubs
 
         public async Task StopKeyLogger()
         {
-            //if (!await IsAuthenticated()) return;
+            if (!_authService.IsAuthenticated(Context.ConnectionId)) return; // [AUTH CHECK]
+            
             _inputService.StopKeyLogger();
             await Clients.Caller.SendAsync("ReceiveStatus", "KEYLOG", false, "Keylogger đã dừng.");
         }

@@ -2,21 +2,25 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq; 
-using System; // <--- [FIX] Thêm using System để dùng StringComparison
+using System; 
+using Server.Models; // Cần thiết để gán Role User
 
 namespace Server.Services
 {
-    // Cung cấp dịch vụ quản lý phiên đăng nhập và xác thực kết nối
+    /// <summary>
+    /// Service quản lý phiên đăng nhập và xác thực theo cơ chế Master Code -> Register -> Login.
+    /// Master Code được yêu cầu cho MỌI LẦN ĐĂNG KÝ TÀI KHOẢN.
+    /// </summary>
     public class AuthService
     {
+        // [CẤU HÌNH] Master Code cứng
         private const string MASTER_SETUP_CODE = "lengoctuyen"; 
         
         // Key: ConnectionId của Client, Value: Username đã đăng nhập
         private readonly ConcurrentDictionary<string, string> _authenticatedConnections = 
             new ConcurrentDictionary<string, string>(); 
         
-        // Key: ConnectionId đã nhập đúng Setup Code, chờ đăng ký tài khoản Admin
-        // Đây là trạng thái tạm thời giữa Bước 1 và Bước 2 của quy trình Setup
+        // Key: ConnectionId đã nhập đúng Setup Code, chờ đăng ký tài khoản (TẠM THỜI)
         private readonly ConcurrentDictionary<string, bool> _setupPendingConnections =
             new ConcurrentDictionary<string, bool>();
         
@@ -27,21 +31,15 @@ namespace Server.Services
             _userRepository = userRepository;
         }
         
-        // --- LOGIC QUẢN LÝ TRẠNG THÁI KHỞI ĐỘNG ---
+        // --- LOGIC QUẢN LÝ TRẠNG THÁI KHỞI ĐỘNG/MASTER CODE ---
 
         /// <summary>
-        /// Kiểm tra Mã Khóa Chủ cho lần khởi động Server đầu tiên.
+        /// Kiểm tra Mã Khóa Chủ. Mã này có thể dùng nhiều lần để đăng ký tài khoản.
         /// </summary>
-        /// <param name="connectionId">ID kết nối hiện tại.</param>
-        /// <param name="code">Mã khóa chủ do người dùng nhập.</param>
-        /// <returns>True nếu mã đúng và Server chưa có tài khoản.</returns>
         public bool ValidateSetupCode(string connectionId, string code)
         {
-            // 1. Chỉ cho phép dùng mã Setup nếu chưa có tài khoản nào được đăng ký
-            if (_userRepository.IsAnyUserRegistered()) return false;
-
-            // 2. So sánh mã (Dùng StringComparison.Ordinal để so sánh chuỗi an toàn hơn)
-            if (string.Equals(code, MASTER_SETUP_CODE, StringComparison.Ordinal)) // <--- [CẬP NHẬT] Dùng string.Equals
+            // So sánh mã
+            if (string.Equals(code, MASTER_SETUP_CODE, StringComparison.Ordinal)) 
             {
                 // Đánh dấu Client này đã được phép ĐĂNG KÝ (tạm thời)
                 _setupPendingConnections.TryAdd(connectionId, true);
@@ -51,28 +49,34 @@ namespace Server.Services
         }
         
         /// <summary>
-        /// Kiểm tra xem kết nối này có đang ở trạng thái chờ ĐĂNG KÝ ADMIN không.
+        /// Kiểm tra xem kết nối này có đang ở trạng thái chờ ĐĂNG KÝ không (đã nhập Master Code).
         /// </summary>
         public bool IsRegistrationAllowed(string connectionId)
         {
-            // Cho phép đăng ký nếu Server chưa có user nào VÀ đã nhập đúng Setup Code
-            return _userRepository.IsAnyUserRegistered() == false && _setupPendingConnections.ContainsKey(connectionId);
+            // Chỉ cần kiểm tra xem Client đã nhập đúng Master Code chưa
+            return _setupPendingConnections.ContainsKey(connectionId);
         }
 
         // --- LOGIC ĐĂNG KÝ/ĐĂNG NHẬP ---
         
         /// <summary>
-        /// Thử đăng ký người dùng mới.
+        /// Thử đăng ký người dùng mới (Yêu cầu phải nhập Master Code trước).
         /// </summary>
         public async Task<bool> TryRegisterAsync(string connectionId, string username, string password)
         {
-            // Chỉ cho phép Đăng ký nếu đây là lần đầu và đã nhập đúng Master Code
+            // [BẮT BUỘC] Phải nhập Master Code trước khi đăng ký
             if (!IsRegistrationAllowed(connectionId)) return false; 
+
+            // [TIÊU THỤ KEY] Sau khi xác nhận được phép đăng ký, xóa trạng thái Setup Code 
+            // Điều này buộc người dùng phải nhập lại Master Code nếu muốn đăng ký tài khoản khác
+            _setupPendingConnections.TryRemove(connectionId, out _);
             
+            // 1. Kiểm tra username đã tồn tại chưa
+            if (_userRepository.IsUsernameTaken(username)) return false;
+
+            // 2. Thêm người dùng mới vào UserRepository
             if (await _userRepository.AddUserAsync(username, password))
             {
-                // Sau khi đăng ký thành công, xóa trạng thái Setup Code (chìa khóa đã dùng xong)
-                _setupPendingConnections.TryRemove(connectionId, out _);
                 return true;
             }
             return false;
@@ -83,18 +87,23 @@ namespace Server.Services
         /// </summary>
         public bool TryAuthenticate(string connectionId, string username, string password)
         {
+            // 1. Kiểm tra Server đã được Setup chưa (nếu chưa thì không thể đăng nhập)
+            if (!_userRepository.IsAnyUserRegistered()) return false; 
+
             var user = _userRepository.GetUser(username);
             
             if (user == null) return false;
 
-            // Kiểm tra mật khẩu (So sánh Plain Text an toàn)
-            if (string.Equals(user.PasswordHash, password, StringComparison.Ordinal)) // <--- [CẬP NHẬT] Dùng string.Equals
+            // 2. Kiểm tra mật khẩu (Giả định PasswordHash là mật khẩu Plain Text)
+            if (string.Equals(user.PasswordHash, password, StringComparison.Ordinal)) 
             {
                 _authenticatedConnections.TryAdd(connectionId, username);
                 return true;
             }
             return false;
         }
+        
+        // --- LOGIC TRUY VẤN VÀ QUẢN LÝ PHIÊN ---
         
         public bool IsUsernameTaken(string username)
         {

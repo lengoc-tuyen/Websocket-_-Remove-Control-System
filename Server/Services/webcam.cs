@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 using System.Threading.Channels;
 using Microsoft.Extensions.Options;
-using Server.Configuration;
 using Server.helper; 
 
 
@@ -22,9 +21,25 @@ using OpenCvSharp;
 
 namespace Server.Services
 {
-    /// <summary>
-    /// Service xử lý Webcam và Màn hình đa nền tảng (Phiên bản cao cấp Full Option)
-    /// </summary>
+
+        public class AppSettings
+    {
+        public WebcamSettings Webcam { get; set; } = new();
+    }
+
+    public class WebcamSettings
+    {
+        public int DefaultFrameWidth { get; set; } = 640;
+        public int DefaultFrameHeight { get; set; } = 480;
+        public int ProofDurationMs { get; set; } = 3000;
+        public int DefaultFrameRate { get; set; } = 10;
+        
+        public string FfmpegPath { get; set; } = "ffmpeg";
+
+        public string MacAvFoundationInput { get; set; } = "0:none";
+        public string LinuxVideoDevice { get; set; } = "/dev/video0";
+    }
+
     public class WebcamService : IDisposable
     {
         private readonly ILogger<WebcamService> _logger;

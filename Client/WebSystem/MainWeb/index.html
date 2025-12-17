@@ -4,21 +4,275 @@
     <meta charset="UTF-8" />
     <title>Trang chính – Christmas LAN Remote</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- [GIỮ NGUYÊN] CSS chung -->
     <link rel="stylesheet" href="style.css" />
     
-    <!-- Snowman Chatbot CSS -->
+    <!-- [THAY THẾ] Tích hợp CSS Auth và CSS Wreath/Door vào style block -->
+    <style>
+        /* CSS TỪ IP.HTML (DOOR/WREATH) */
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        body {
+            height: 100vh;
+            font-family: system-ui, "Segoe UI", sans-serif;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Vùng phủ ban đầu (Chứa Wreath/IP Input) */
+        #initial-connect-overlay {
+            position: fixed;
+            inset: 0;
+            background: url("image/door-bg.jpg") center/cover no-repeat fixed;
+            z-index: 2000; /* Luôn nằm trên cùng */
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        /* Lớp phủ mờ cho nền Wreath */
+        #initial-connect-overlay::before {
+            content:"";
+            position:absolute;
+            inset:0;
+            background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6));
+            pointer-events:none;
+            z-index:0;
+        }
+
+        .wreath-wrap {
+            position: absolute;
+            top: 26vh;
+            left: 50%;
+            transform: translateX(-50%);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            z-index: 2;
+        }
+
+        .wreath {
+            width: 260px;
+            height: 260px;
+            background: url("image/wreath.png") center/contain no-repeat;
+            position: relative;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            filter: drop-shadow(0 10px 25px rgba(0,0,0,0.7));
+            animation: leds 2.2s ease-in-out infinite, wreath-drop 0.8s ease-out;
+        }
+
+        @keyframes leds {
+            0%, 100% { filter: drop-shadow(0 8px 22px rgba(239,68,68,0.7)); }
+            50%      { filter: drop-shadow(0 8px 26px rgba(250,204,21,0.95)); }
+        }
+
+        @keyframes wreath-drop {
+            0%   { transform: scale(0.7) translateY(-40px); opacity:0; }
+            70%  { transform: scale(1.05) translateY(6px);  opacity:1; }
+            100% { transform: scale(1)    translateY(0);    opacity:1; }
+        }
+
+        .wreath-inner {
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            gap:10px;
+            transform: translateY(6px);
+        }
+
+        #ipInputWreath { /* Đổi ID để tránh trùng lặp với #serverIpInput trong header */
+            padding: 12px 10px;
+            width: 185px;
+            border-radius: 10px;
+            border: 2px solid #ffffff;
+            background: rgba(255,255,255,0.9);
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            color: #111827;
+            outline: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+
+        #connectBtnWreath { /* Đổi ID để tránh trùng lặp với #connectBtn trong header */
+            width: 185px;
+            padding: 9px;
+            border-radius: 999px;
+            font-size: 14px;
+            font-weight: 700;
+            background: #f97316;
+            border:none;
+            color:#111827;
+            cursor:pointer;
+            box-shadow:0 4px 14px rgba(0,0,0,0.5);
+            transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+        }
+
+        #connectBtnWreath:hover {
+            background:#fb923c;
+            transform:translateY(-2px);
+            box-shadow:0 6px 18px rgba(0,0,0,0.7);
+        }
+
+        #hint {
+            margin-top: 6px;
+            font-size: 12px;
+            color:#e5e7eb;
+            text-shadow:0 1px 3px rgba(0,0,0,0.8);
+            text-align:center;
+        }
+
+        .bottom-links {
+            position: fixed;
+            bottom: 10px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 2;
+            font-size: 12px;
+            color:#e5e7eb;
+            text-shadow:0 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* Tuyết rơi */
+        .snowflake {
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+            animation: snow-spin 6s linear infinite;
+        }
+
+        @keyframes snow-spin {
+            from { transform: rotate(0deg); }
+            to   { transform: rotate(360deg); }
+        }
+
+        /* Hiệu ứng mở cửa khi connect */
+        .door-opening .wreath-wrap .wreath {
+            animation: wreath-zoom 0.9s ease-in forwards;
+        }
+
+        @keyframes wreath-zoom {
+            0%   { transform: scale(1) translateY(0);    opacity:1; }
+            40%  { transform: scale(1.15) translateY(-10px); }
+            100% { transform: scale(0.4) translateY(-120px); opacity:0; }
+        }
+
+        .door-opening #initial-connect-overlay::before {
+            animation: fadeout-bg 0.9s ease-in forwards;
+        }
+
+        @keyframes fadeout-bg {
+            0%   { background: radial-gradient(circle at top, rgba(15,23,42,0.25), rgba(15,23,42,0.6)); }
+            100% { background: rgba(15,23,42,1); }
+        }
+
+        /* CSS TỪ AUTH SCREEN (Đã thêm ở bước trước) */
+        .auth-card {
+            background-color: #2e3a47; /* Màu nền tối */
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            border: 2px solid #D32F2F; /* Viền đỏ Giáng Sinh */
+        }
+        .auth-card h2 {
+            color: #fff;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        .auth-card input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border: 1px solid #5a6b7c;
+            background-color: #1a232b;
+            color: #f0f0f0;
+            outline: none;
+        }
+        .auth-card .btn {
+            width: 100%;
+            padding: 12px;
+            font-weight: bold;
+            transition: background-color 0.2s;
+        }
+        
+        /* Căn giữa màn hình Auth */
+        #auth-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: none; /* Mặc định ẩn, sẽ được hiển thị khi kết nối */
+            align-items: center;
+            justify-content: center;
+            background: rgba(15, 23, 42, 0.95); /* Overlay tối */
+            z-index: 1000;
+        }
+        
+        /* Ẩn main screen khi chưa auth */
+        #main-screen {
+            display: none; 
+            flex-direction: column; /* Đảm bảo layout chính hoạt động */
+            height: 100%;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive: màn nhỏ hạ vòng hoa thấp hơn xíu & thu nhỏ */
+        @media (max-width: 768px) {
+            .wreath-wrap { top: 22vh; }
+            .wreath { width: 220px; height: 220px; }
+        }
+    </style>
+
     <link rel="stylesheet" href="../Chatbot/chatbot.css">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 </head>
 <body>
+
+<!-- ======================= 1. MÀN HÌNH NHẬP IP BAN ĐẦU (Wreath Overlay) ======================= -->
+<div id="initial-connect-overlay">
+    <div class="wreath-wrap">
+        <div class="wreath">
+            <div class="wreath-inner">
+                <input type="text" id="ipInputWreath" placeholder="192.168.1.10:3000" value="192.168.1.99" />
+                <button id="connectBtnWreath">Kết nối 🎄</button>
+                <div id="hint">Nhập IP server / agent trong LAN</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="bottom-links">
+        © Đồ án Mạng Máy Tính – Christmas LAN Remote ❄
+    </div>
+    
+    <audio id="bellSound" src="bell.mp3" preload="auto"></audio>
+    
+    <!-- Các thẻ <img> cho tuyết rơi sẽ được tạo bằng JavaScript -->
+</div>
+
+
+<!-- ======================= HEADER (Chứa IP đã nhập và Status) ======================= -->
 <header>
     <div class="app-title">
         🎄 <span>Christmas</span> LAN Remote
     </div>
     <div class="header-right">
         <div class="ip-label">
-            Server IP: <input id="serverIpInput" value="192.168.1.99" placeholder="Nhập IP (vd: 192.168.1.5)" style="background:transparent; border:none; color:white; width: 140px; outline: none; font-weight: bold;" />
+            <!-- [REUSE ID] Đây là IP Input chính được connection.js sử dụng -->
+            Server IP: <input id="serverIpInput" value="192.168.1.99" placeholder="Nhập IP (vd: 192.168.1.5)" style="background:transparent; border:none; color:white; width: 140px; outline: none; font-weight: bold;" readonly/>
         </div>
         <div id="connectionStatus" style="display: flex; align-items: center; gap: 5px;">
             <span id="statusDot" class="status-dot status-disconnected"></span>
@@ -28,8 +282,50 @@
     </div>
 </header>
 
-<div class="layout">
+
+<!-- ======================= 2. MÀN HÌNH XÁC THỰC (AUTH SCREEN) ======================= -->
+<!-- Mặc định ẩn, sẽ được hiện khi kết nối xong và cần Auth -->
+<div id="auth-screen">
+    <div id="loading-message" class="auth-card" style="display: block;">
+        <h2>Đang chờ kết nối Server...</h2>
+        <p style="color:#f0f0f0; font-size: 0.9em;">Vui lòng bấm "Kết nối" và đợi Server phản hồi trạng thái.</p>
+    </div>
+
+    <!-- 1. FORM SETUP (Yêu cầu Master Code) -->
+    <div id="setup-form" class="auth-card hidden">
+        <h2>🔑 Master Setup Code</h2>
+        <p style="color:#facc15; margin-bottom: 20px;">Nhập mã khóa để xác nhận quyền đăng ký tài khoản mới.</p>
+        <input type="password" id="master-code" placeholder="Master Code" onkeydown="if(event.key==='Enter') submitSetupCode()"/>
+        <button class="btn btn-warning" id="btn-submit-setup">Xác nhận Master Code</button>
+    </div>
+
+    <!-- 2. FORM REGISTER (Đăng ký tài khoản) -->
+    <div id="register-form" class="auth-card hidden">
+        <h2>📝 Đăng Ký Tài Khoản</h2>
+        <p style="color:#388E3C; margin-bottom: 10px;">Đã xác nhận Master Code. Tạo tài khoản để truy cập!</p>
+        <input type="text" id="reg-username" placeholder="Tên đăng nhập" />
+        <input type="password" id="reg-password" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter') registerUser()"/>
+        <button class="btn btn-success" id="btn-submit-register">Hoàn tất Đăng Ký</button>
+    </div>
+
+    <!-- 3. FORM LOGIN (Đăng nhập) -->
+    <div id="login-form" class="auth-card hidden">
+        <h2>🚪 Đăng Nhập</h2>
+        <p style="color:#f0f0f0; margin-bottom: 20px;">Sử dụng tài khoản đã đăng ký.</p>
+        <input type="text" id="login-username" placeholder="Tên đăng nhập" />
+        <input type="password" id="login-password" placeholder="Mật khẩu" onkeydown="if(event.key==='Enter') loginUser()"/>
+        <button class="btn btn-primary" id="btn-submit-login">Đăng Nhập</button>
+        <p style="margin-top: 15px; color:#9ca3af; font-size: 0.85em;">
+            Chưa có tài khoản? Ngắt kết nối, nhập Master Code để đăng ký.
+        </p>
+    </div>
+</div>
+
+
+<!-- ======================= 3. MÀN HÌNH CHÍNH (MAIN SCREEN) ======================= -->
+<div id="main-screen" class="layout">
     <main>
+        <!-- Dashboard Content (Giữ nguyên) -->
         <div class="section-header">
             <div>Đang điều khiển: <strong id="currentDeviceName">Server LAN</strong></div>
             <small>Christmas Edition • WebSocket Realtime Control</small>
@@ -43,7 +339,8 @@
             <button class="tab-btn" data-target="webcamSection"><span class="tab-icon">📷</span> Webcam</button>
             <button class="tab-btn" data-target="powerSection"><span class="tab-icon">🔌</span> Power</button>
         </div>
-
+        
+        <!-- Tab Content (Giữ nguyên) -->
         <div class="tab-content">
             <section id="appsSection" style="flex:1;">
                 <div class="gift-box active">
@@ -72,43 +369,37 @@
                     </div>
                 </div>
             </section>
-
+            
             <section id="processesSection" style="display:none; flex:1;">
-            <div class="gift-box">
-                <div class="gift-inner">
-                    <h2 style="font-size:15px; margin-bottom:6px;">⚙ Quản lý tiến trình (List / Start / Stop)</h2>
-                    <div class="section-actions">
-                        <button class="btn btn-primary btn-sm" id="refreshProcessesBtn">Lấy danh sách Process</button>
-
-                        <!-- NEW: nhập tên process -->
-                        <input type="text" id="processNameInput"
-                            placeholder="Tên Process (vd: chrome.exe)"
-                            class="text-black px-2 py-1 rounded text-sm"
-                            style="width: 170px;">
-
-                        <!-- NEW: nút Start Process -->
-                        <button class="btn btn-outline btn-sm" id="startProcessBtn">Start Process</button>
-
-                        <button class="btn btn-outline btn-sm" id="stopSelectedProcessBtn">Stop Process</button>
-                    </div>
-                    <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
-                        <table>
-                            <thead>
-                            <tr>
-                                <th style="width:30px;">Chọn</th>
-                                <th>PID</th>
-                                <th>Tên tiến trình</th>
-                                <th>RAM (MB)</th>
-                            </tr>
-                            </thead>
-                            <tbody id="processesTableBody"></tbody>
-                        </table>
+                <div class="gift-box">
+                    <div class="gift-inner">
+                        <h2 style="font-size:15px; margin-bottom:6px;">⚙ Quản lý tiến trình (List / Start / Stop)</h2>
+                        <div class="section-actions">
+                            <button class="btn btn-primary btn-sm" id="refreshProcessesBtn">Lấy danh sách Process</button>
+                            <input type="text" id="processNameInput"
+                                placeholder="Tên Process (vd: chrome.exe)"
+                                class="text-black px-2 py-1 rounded text-sm"
+                                style="width: 170px;">
+                            <button class="btn btn-outline btn-sm" id="startProcessBtn">Start Process</button>
+                            <button class="btn btn-outline btn-sm" id="stopSelectedProcessBtn">Stop Process</button>
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto; margin-top: 10px;">
+                            <table>
+                                <thead>
+                                <tr>
+                                    <th style="width:30px;">Chọn</th>
+                                    <th>PID</th>
+                                    <th>Tên tiến trình</th>
+                                    <th>RAM (MB)</th>
+                                </tr>
+                                </thead>
+                                <tbody id="processesTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
-
-
+            </section>
+            
             <section id="screenSection" style="display:none; flex:1;">
                 <div class="gift-box">
                     <div class="gift-inner">
@@ -151,7 +442,7 @@
                     </div>
                 </div>
             </section>
-
+            
             <section id="powerSection" style="display:none; flex:1;">
                 <div class="gift-box">
                     <div class="gift-inner">
@@ -180,40 +471,217 @@
     <span id="lastUpdated" style="color: #9ca3af;"></span>
 </div>
 
-<!-- API Config (load đầu tiên) -->
-<script type="module" src="../Chatbot/config.js"></script>
+<!-- Snowman Chatbot UI (Giữ nguyên vị trí và cấu trúc) -->
+<div id="snowman-container" style="position: fixed; right: 16px; bottom: 16px; z-index: 9999; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+    
+    <!-- CỬA SỔ CHAT (ID: chat-window) -->
+    <div id="chat-window" style="display: none; background: white; border-radius: 12px; box-shadow: 0 15px 35px rgba(0,0,0,0.3); width: 320px; overflow: hidden; margin-bottom: 10px; flex-direction: column; border: 2px solid #D32F2F;">
+        <div class="chat-header" style="background: #D32F2F; color: white; padding: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 1.2rem; font-weight: bold; font-family: sans-serif;">
+            <span>☃️ Snowie AI</span>
+            <button onclick="toggleChat()" style="background:none;border:none;color:white;cursor:pointer;font-size:24px;line-height:1;">✕</button>
+        </div>
+        <div id="chat-messages" class="chat-body" style="height: 350px; padding: 10px; overflow-y: auto; background: #fcfcfc; color: #333; font-family: sans-serif; font-size: 14px; display: flex; flex-direction: column;">
+            <div class="msg-bot" style="background-color: #e5f5e5; padding: 8px 12px; border-radius: 12px 12px 12px 4px; margin-bottom: 8px; align-self: flex-start; max-width: 85%;">Ho ho ho! Chào bạn. Tôi là Snowie, trợ lý AI đa nền tảng. Cần giúp gì cứ hỏi tôi nhé! ⛄</div>
+        </div>
+        <div class="chat-input-area" style="padding: 10px; border-top: 1px solid #eee; display: flex; gap: 8px;">
+            <input type="text" id="chat-input" placeholder="Hỏi Snowie..." onkeypress="if(event.key==='Enter') sendChatUI()" style="flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 8px; font-family: sans-serif;">
+            <button onclick="sendChatUI()" id="sendChatBtn" style="background-color: #388E3C; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: sans-serif;">Gửi</button>
+        </div>
+    </div>
+    
+    <!-- Avatar & Bong bóng -->
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+        <div id="snowmanBubble" style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%) translateY(10px); background: rgba(255,255,255,0.95); color: #111827; padding: 8px 12px; border-radius: 18px; font-size: 14px; font-weight: 700; box-shadow: 0 6px 14px rgba(0,0,0,0.4); border: 1px solid rgba(15,23,42,0.25); opacity: 0; transition: opacity .35s ease, transform .35s ease; white-space: nowrap;">Xin chào</div>
+        
+        <img src="giphy.gif" alt="Snowman Chatbot" id="snowman-avatar" onclick="toggleChat()" style="width: 110px; height: auto; cursor: pointer; user-select: none; filter: drop-shadow(0 10px 20px rgba(0,0,0,0.55));">
+    </div>
+</div>
 
-<!-- AI Script (phải load trước ui.js) -->
-<script type="module" src="../Chatbot/InforOfChatBot.js"></script>
 
-<!-- Snowman Chatbot Script (phải load trước ui.js) -->
-<script src="../Chatbot/chatbot.js"></script>
+<!-- ======================= SCRIPTS ======================= -->
+<script>
+    // [LOGIC TỪ IP.HTML]
+    
+    // ❄ Tuyết rơi (dùng img/snow.png)
+    (function createSnow() {
+        const numFlakes = 30;
+        const flakes = [];
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+
+        for (let i = 0; i < numFlakes; i++) {
+            const img = document.createElement("img");
+            img.src = "image/snow.png";
+            img.className = "snowflake";
+
+            const size = Math.random() * 25 + 20; 
+            img.style.width = size + "px";
+
+            img.style.top = Math.random() * h + "px";
+            img.style.left = Math.random() * w + "px";
+            img.style.opacity = (Math.random() * 0.7 + 0.3).toString();
+
+            // [FIX] Thêm vào Overlay thay vì body
+            const overlay = document.getElementById('initial-connect-overlay');
+            if (overlay) overlay.appendChild(img); 
+            
+            flakes.push({
+                el: img,
+                speed: Math.random() * 1.5 + 0.5,
+                drift: Math.random() * 0.6 + 0.2
+            });
+        }
+
+        function animate() {
+            const h = window.innerHeight;
+            const w = window.innerWidth;
+
+            flakes.forEach(flake => {
+                let top = parseFloat(flake.el.style.top);
+                let left = parseFloat(flake.el.style.left);
+
+                top += flake.speed;
+                left += Math.sin(top / 40) * flake.drift;
+
+                if (top > h) {
+                    top = -50;
+                    left = Math.random() * w;
+                }
+
+                flake.el.style.top = top + "px";
+                flake.el.style.left = left + "px";
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    })();
+
+    // 🎄 Xử lý nút Connect trên Wreath
+    document.addEventListener("DOMContentLoaded", () => {
+        const btnWreath = document.getElementById("connectBtnWreath");
+        const ipInputWreath = document.getElementById("ipInputWreath");
+        const serverIpInputHeader = document.getElementById("serverIpInput"); // Input trong Header
+        const bell = document.getElementById("bellSound");
+
+        // Load IP đã lưu nếu có (từ lần chạy trước)
+        const savedIp = localStorage.getItem("remote_ip_config");
+        if (savedIp) {
+            ipInputWreath.value = savedIp;
+            serverIpInputHeader.value = savedIp;
+        }
+
+        btnWreath.addEventListener("click", () => {
+            const ip = ipInputWreath.value.trim();
+            if (!ip) {
+                alert("Hãy nhập địa chỉ IP trong mạng LAN!");
+                ipInputWreath.focus();
+                return;
+            }
+
+            localStorage.setItem("remote_ip_config", ip);
+            serverIpInputHeader.value = ip; // Đồng bộ IP lên Header
+            
+            try { bell.currentTime = 0; bell.play(); } catch (e) {}
+
+            document.body.classList.add("door-opening"); // Bắt đầu hoạt ảnh đóng cửa
+
+            // [SỬA LỚN] Thay vì chuyển trang, gọi hàm connect() từ connection.js
+            setTimeout(() => {
+                const overlay = document.getElementById('initial-connect-overlay');
+                overlay.style.opacity = 0;
+                
+                // Sau khi overlay mờ, chuyển giao diện sang màn hình Auth
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    // [FIX] Màn hình Auth/Main phải có z-index thấp hơn overlay
+                    document.getElementById('auth-screen').style.display = 'flex'; // Hiện màn hình Auth
+                    
+                    // [GỌI CONNECT] Gọi hàm kết nối chính (được định nghĩa trong connection.js)
+                    if (window.connect) window.connect(); 
+                    else console.error("connection.js chưa được tải!");
+                }, 800); 
+
+            }, 50); // Bắt đầu hiệu ứng sau 50ms
+        });
+
+        ipInputWreath.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") btnWreath.click();
+        });
+        
+        // --- LOGIC CHATBOT (Để HTML gọi trực tiếp) ---
+        // [KHÔNG BỊ LẶP] Hàm gửi chat từ UI (Cần định nghĩa ở đây để HTML gọi được)
+        window.sendChatUI = async function() {
+            const input = document.getElementById("chat-input");
+            const text = input.value.trim();
+            if (!text || !window.chatWithGemini) return; 
+
+            if(window.ui && window.ui.addChatMessage) {
+                window.ui.addChatMessage(text, 'user');
+            }
+            input.value = "";
+            
+            if(window.ui) window.ui.showTyping(true);
+
+            const botResponse = await window.chatWithGemini(text);
+
+            if(window.ui) {
+                window.ui.showTyping(false);
+                window.ui.addChatMessage(botResponse, 'bot');
+            }
+        }
+
+        // [KHÔNG BỊ LẶP] Hàm toggleChat để ẩn hiện khung chat (Cần định nghĩa ở đây)
+        window.toggleChat = function() {
+            const chatWindow = document.getElementById('chat-window');
+            const avatar = document.getElementById('snowman-avatar');
+            const bubble = document.getElementById("snowmanBubble");
+
+            if (!chatWindow) return;
+
+            if (chatWindow.style.display === "none" || chatWindow.style.display === "") {
+                chatWindow.style.display = 'flex'; 
+                if (bubble) bubble.style.opacity = "0"; 
+                if (avatar) avatar.style.transform = 'scale(1.1)'; 
+            } else {
+                chatWindow.style.display = 'none'; 
+                if (avatar) avatar.style.transform = 'scale(1)';
+            }
+        }
+
+        // [KHÔNG BỊ LẶP] Logic Bong bóng chào ban đầu
+        const bubble = document.getElementById("snowmanBubble");
+        if (bubble) {
+            function showHello() {
+                const chatWindow = document.getElementById('chat-window');
+                if (chatWindow && chatWindow.style.display === 'flex') {
+                    bubble.style.opacity = "0";
+                    return;
+                }
+
+                bubble.textContent = "Hỏi tôi nhé!";
+                bubble.style.opacity = "1";
+                bubble.style.transform = "translateX(-50%) translateY(0)"; 
+                setTimeout(() => {
+                    bubble.style.opacity = "0";
+                    bubble.style.transform = "translateX(-50%) translateY(10px)";
+                }, 3000);
+            }
+            showHello();
+            setInterval(showHello, 7000); 
+        }
+    });
+
+</script>
+
+<!-- Tải các Scripts (Cần đảm bảo đúng thứ tự) -->
+<script type="module" src="Chatbot/config.js"></script>
+<script type="module" src="Chatbot/InforOfChatBot.js"></script>
+<script src="Chatbot/chatbot.js"></script>
 
 <script src="ui.js"></script> 
 <script src="connection.js"></script>
-
-<!-- Snowman Chatbot -->
-<div id="snowman-chatbot">
-    <div id="snowmanBubble" class="chat-bubble">Xin chào</div>
-    <img src="giphy.gif" alt="Snowman Chatbot" class="snowman-img" id="snowman-img">
-</div>
-
-<!-- Chat Window -->
-<div id="chat-window">
-    <div class="chat-header">
-        <span>☃️ Snowman AI</span>
-        <button onclick="toggleChat()">✕</button>
-    </div>
-
-    <div class="chat-body" id="chat-messages">
-        <div class="msg-bot">Mình có thể giúp gì cho bạn? 🎄</div>
-    </div>
-
-    <div class="chat-input-area">
-        <input id="chat-input" type="text" placeholder="Hỏi gì đó..." />
-        <button onclick="sendChatUI()">Gửi</button>
-    </div>
-</div>
 
 </body>
 </html>
